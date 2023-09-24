@@ -20,7 +20,7 @@ using EntityStates;
 
 namespace FreeItemFriday.Skills
 {
-    public class SuperBite : FreeSkillSaturday.Behavior
+    public class Disembowel : FreeSkillSaturday.Behavior
     {
         public static float damageCoefficient = 2f;
 

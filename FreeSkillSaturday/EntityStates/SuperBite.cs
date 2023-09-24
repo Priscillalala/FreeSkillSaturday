@@ -26,7 +26,7 @@ namespace EntityStates.Croco
         public SuperBite() : base()
         {
             baseDuration = 1.2f;
-            damageCoefficient = 2f;
+            damageCoefficient = FreeItemFriday.Skills.Disembowel.damageCoefficient;
             hitBoxGroupName = "Slash";
             hitEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Treebot/OmniImpactVFXSlashSyringe.prefab").WaitForCompletion();
             procCoefficient = 1f;
@@ -53,8 +53,8 @@ namespace EntityStates.Croco
         private float attackResetTimer;
         private float durationBeforeInterruptable;
         private float currentResetAttackCount;
-        private GameObject slash1EffectInstance;
-        private GameObject slash2EffectInstance;
+        private GameObject secondSwingEffectInstance;
+        //private GameObject slash2EffectInstance;
 
         public override void OnEnter()
         {
@@ -66,14 +66,14 @@ namespace EntityStates.Croco
 
         public override void OnExit()
         {
-            if (slash1EffectInstance)
+            if (secondSwingEffectInstance)
             {
-                Destroy(slash1EffectInstance);
+                Destroy(secondSwingEffectInstance);
             }
-            if (slash2EffectInstance)
+            /*if (slash2EffectInstance)
             {
                 Destroy(slash2EffectInstance);
-            }
+            }*/
             base.OnExit();
         }
 
@@ -101,14 +101,14 @@ namespace EntityStates.Croco
         {
             if (authorityHitThisFixedUpdate && authorityInHitPause)
             {
-                if (slash1EffectInstance && slash1EffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
+                if (secondSwingEffectInstance && secondSwingEffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
                 {
                     scaleParticleSystemDuration.newDuration = 20f;
                 }
-                if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
+                /*if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
                 {
                     scaleParticleSystemDuration.newDuration = 20f;
-                }
+                }*/
             }
             base.AuthorityFixedUpdate();
             if (authorityHasFiredAtAll)
@@ -128,7 +128,7 @@ namespace EntityStates.Croco
             if (currentResetAttackCount >= 2)
             {
                 overlapAttack.impactSound = Addressables.LoadAssetAsync<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridBiteHit.asset").WaitForCompletion().index;
-                overlapAttack.AddModdedDamageType(FreeItemFriday.Skills.SuperBite.SuperBleedOnHit);
+                overlapAttack.AddModdedDamageType(FreeItemFriday.Skills.Disembowel.SuperBleedOnHit);
                 CrocoDamageTypeController crocoDamageTypeController = base.GetComponent<CrocoDamageTypeController>();
                 if (crocoDamageTypeController)
                 {
@@ -145,11 +145,11 @@ namespace EntityStates.Croco
             {
                 //GameObject crocoSlashEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoComboFinisherSlash.prefab").WaitForCompletion();
                 Transform transform = base.FindModelChild("MouthMuzzle");
-                if (transform && !slash1EffectInstance)
+                if (transform && !secondSwingEffectInstance)
                 {
-                    slash1EffectInstance = UnityEngine.Object.Instantiate(FreeItemFriday.Skills.SuperBite.CrocoSuperBiteEffect, transform);
-                    slash1EffectInstance.transform.forward = characterDirection.forward;
-                    if (slash1EffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
+                    secondSwingEffectInstance = UnityEngine.Object.Instantiate(FreeItemFriday.Skills.Disembowel.CrocoSuperBiteEffect, transform);
+                    secondSwingEffectInstance.transform.forward = characterDirection.forward;
+                    if (secondSwingEffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
                     {
                         scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
                     }
@@ -176,14 +176,14 @@ namespace EntityStates.Croco
         public override void AuthorityExitHitPause()
         {
             base.AuthorityExitHitPause();
-            if (slash1EffectInstance && slash1EffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
+            if (secondSwingEffectInstance && secondSwingEffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
             {
                 scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
             }
-            if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
+            /*if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
             {
                 scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
-            }
+            }*/
         }
 
         public override InterruptPriority GetMinimumInterruptPriority() => fixedAge >= durationBeforeInterruptable ? InterruptPriority.Skill : InterruptPriority.Pain;

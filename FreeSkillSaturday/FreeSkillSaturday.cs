@@ -19,14 +19,11 @@ namespace FreeItemFriday
     [BepInConfig("FreeItemFriday", BepInConfig.ComponentGroupingFlags.ByComponent | BepInConfig.ComponentGroupingFlags.ByNamespace)]
     public class FreeSkillSaturday : BaseUnityPlugin<FreeSkillSaturday>
     {
-        //public static FreeSkillSaturday instance;
         public AssetBundle assets;
         public ExpansionPackage expansion;
 
         public void Awake()
         {
-            Logger.LogInfo("Awake from logger!");
-            //instance = this;
             assets = this.LoadAssetBundle("freeitemfridayassets", true);
             expansion = new ExpansionPackage("groovesalad.FreeItemFriday", "FSS")
                 .SetIconSprite(assets.LoadAsset<Sprite>("texFreeItemFridayExpansionIcon"));

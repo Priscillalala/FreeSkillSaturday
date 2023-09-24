@@ -47,7 +47,7 @@ namespace FreeItemFriday.Language
             { CrocoPassiveToxin?.skillDescriptionToken, $"Attacks that apply <style=cIsHealing>Poison</style> apply deadly <style=cIsUtility>Venom</style> instead, slowly <style=cIsUtility>immobilizing victims</style>." },
             { "FSS_KEYWORD_VENOM", $"<style=cKeywordName>Venomous</style><style=cSub>Deal <style=cIsDamage>{Skills.Venom.damageCoefficientPerSecond:0%} damage per second</style> and reduce their movement and attack speed by <style=cIsUtility>{Skills.Venom.speedReductionPerSecond:0%} per second</style>. <i>2x effectiveness against lightweight enemies.</i></style>" },
             { CrocoSuperBite?.skillNameToken, $"Disembowel" },
-            { CrocoSuperBite?.skillDescriptionToken, $"<style=cIsHealing>Poisonous</style>. <style=cIsDamage>Slayer</style>. Lacerate an enemy for <style=cIsDamage>3x{Skills.SuperBite.damageCoefficient:0%} damage</style>, causing <style=cIsDamage>bleeding</style> and <style=cIsHealth>hemorrhaging</style>." },
+            { CrocoSuperBite?.skillDescriptionToken, $"<style=cIsHealing>Poisonous</style>. <style=cIsDamage>Slayer</style>. Lacerate an enemy for <style=cIsDamage>3x{Skills.Disembowel.damageCoefficient:0%} damage</style>, causing <style=cIsDamage>bleeding</style> and <style=cIsHealth>hemorrhaging</style>." },
             { "FSS_KEYWORD_BLEED", $"<style=cKeywordName>Bleed</style><style=cSub>Deal <style=cIsDamage>320%</style> base damage over 4s. <i>Bleed can stack.</i></style>" },
             #endregion
 

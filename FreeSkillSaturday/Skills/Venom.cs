@@ -234,7 +234,7 @@ namespace FreeItemFriday.Skills
                     && crocoDamageTypeController.passiveSkillSlot.skillDef is ToxinSkillDef
                     && victim)
                 {
-                    DotController.InflictDot(victim, damageInfo.attacker, ToxinDot, 5f * damageInfo.procCoefficient, 1f, dotMaxStacksFromAttacker);
+                    DotController.InflictDot(victim, damageInfo.attacker, ToxinDot, duration * damageInfo.procCoefficient, 1f, dotMaxStacksFromAttacker);
                 }
             }
 
