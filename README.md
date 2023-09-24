@@ -1,5 +1,5 @@
 # FreeItemFriday
-A content mod powered by IVYL. Currently features 3 new items & equipment, 2 new alternate skills, and a new artifact. FreeItemFriday was recently rewritten, you can find the old FreeItemFriday built with GrooveSharedUtils [here](https://github.com/Priscillalala/FreeItemFriday).
+A content mod powered by IVYL. Currently features 3 new items & equipment, 2 new alternate skills, and a new artifact. FreeItemFriday was recently rewritten; you can find the old FreeItemFriday built with GrooveSharedUtils [here](https://github.com/Priscillalala/FreeItemFriday).
 
 ## Items
 <table>
