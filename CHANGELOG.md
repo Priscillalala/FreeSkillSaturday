@@ -1,3 +1,6 @@
+## 1.3.1
+* Fix Disembowel sharing the Venom achievement
+
 ## 1.3.0
 * New Alternate Skill: Venom
 * New Alternate Skill: Disembowel

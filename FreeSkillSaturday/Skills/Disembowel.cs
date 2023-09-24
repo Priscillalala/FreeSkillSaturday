@@ -41,7 +41,7 @@ namespace FreeItemFriday.Skills
             Content.Achievements.CrocoBeatArenaFast = Expansion.DefineAchievementForSkill("CrocoBeatArenaFast", Content.Skills.CrocoSuperBite)
                 .SetIconSprite(Content.Skills.CrocoSuperBite.icon)
                 .SetPrerequisiteAchievement("BeatArena")
-                .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
+                .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
 
             Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset").Completed += handle =>
             {
