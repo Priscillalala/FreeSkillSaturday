@@ -19,6 +19,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Ivyl;
 using ThreeEyedGames;
+using System.Threading.Tasks;
 
 namespace FreeItemFriday.Artifacts
 {
@@ -54,9 +55,9 @@ namespace FreeItemFriday.Artifacts
             // Match achievement identifiers from FreeItemFriday
             Content.Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
 
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab").Completed += handle =>
+            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab").Completed += handle =>
             {
-                slipperyTerrainFormulaDisplay = PrefabAPI.InstantiateClone(handle.Result, "SlipperyTerrainFormulaDisplay", false);
+                slipperyTerrainFormulaDisplay = IvyLibrary.CreatePrefab(handle.Result, "SlipperyTerrainFormulaDisplay");
                 artifactCode.CopyToFormulaDisplay(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
                 foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
                 {
@@ -70,25 +71,61 @@ namespace FreeItemFriday.Artifacts
                 {
                     mesh.gameObject.SetActive(false);
                 }
-            };
+            };*/
 
-            Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").Completed += handle =>
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").WhenCompleted(t =>
+            {
+                if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
+                {
+                    renderer.sharedMaterial = t.Result;
+                }
+            });
+            /*Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").Completed += handle =>
             {
                 if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
                 {
                     renderer.sharedMaterial = handle.Result;
                 }
-            };
+            };*/
 
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").Completed += handle =>
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").WhenCompleted(t =>
+            {
+                if (t.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
+                {
+                    activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
+                }
+            });
+            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").Completed += handle =>
             {
                 if (handle.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
                 {
                     activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
                 }
-            };
+            };*/
+
+            CreateSlipperyTerrainFormulaDisplayAsync(artifactCode).WhenCompleted(t => slipperyTerrainFormulaDisplay = t.Result);
 
             SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+        }
+
+        public async Task<GameObject> CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
+        {
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var _artifactFormulaDisplay);
+            GameObject slipperyTerrainFormulaDisplay = IvyLibrary.CreatePrefab(await _artifactFormulaDisplay, "SlipperyTerrainFormulaDisplay");
+            artifactCode.CopyToFormulaDisplay(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
+            foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
+            {
+                decal.Fade = 0.15f;
+            }
+            if (slipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
+            {
+                frame.gameObject.SetActive(false);
+            }
+            if (slipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
+            {
+                mesh.gameObject.SetActive(false);
+            }
+            return slipperyTerrainFormulaDisplay;
         }
         
         private void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)

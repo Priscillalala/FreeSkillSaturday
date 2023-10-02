@@ -17,6 +17,7 @@ using EntityStates.BrotherMonster;
 using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
 using EntityStates;
+using System.Threading.Tasks;
 
 namespace FreeItemFriday.Skills
 {
@@ -43,14 +44,16 @@ namespace FreeItemFriday.Skills
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
 
-            Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset").Completed += handle =>
+            IvyLibrary.LoadAddressableAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset")
+                .WhenCompleted(t => t.Result.AddSkill(Content.Skills.CrocoSuperBite, Content.Achievements.CrocoBeatArenaFast.UnlockableDef));
+            /*Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset").Completed += handle =>
             {
                 handle.Result.AddSkill(Content.Skills.CrocoSuperBite, Content.Achievements.CrocoBeatArenaFast.UnlockableDef);
-            };
+            };*/
 
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab").Completed += handle =>
+            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab").Completed += handle =>
             {
-                CrocoSuperBiteEffect = handle.Result.InstantiateClone("CrocoSuperBiteEffect", false);
+                CrocoSuperBiteEffect = IvyLibrary.CreatePrefab(handle.Result, "CrocoSuperBiteEffect");
                 Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat").Completed += handle =>
                 {
                     if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
@@ -80,9 +83,42 @@ namespace FreeItemFriday.Skills
                 {
                     flash.localScale *= multiplier;
                 }
-            };
+            };*/
+            CreateCrocoSuperBiteEffectAsync().WhenCompleted(t => CrocoSuperBiteEffect = t.Result);
 
             Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
+        }
+
+        public async Task<GameObject> CreateCrocoSuperBiteEffectAsync()
+        {
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab", out var _crocoBiteEffect);
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat", out var _matCrocoGooSmall2);
+            IvyLibrary.LoadAddressableAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png", out var _texRampPoison);
+            GameObject crocoSuperBiteEffect = IvyLibrary.CreatePrefab(await _crocoBiteEffect, "CrocoSuperBiteEffect");
+            if (crocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
+            {
+                _matCrocoGooSmall2.WhenCompleted(t => gooRenderer.sharedMaterial = t.Result);
+            }
+            float multiplier = 1.2f;
+            if (crocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
+            {
+                swingTrail.localScale *= multiplier;
+                if (swingTrail.TryGetComponent(out ParticleSystemRenderer swingTrailRenderer))
+                {
+                    swingTrailRenderer.sharedMaterial = new Material(swingTrailRenderer.sharedMaterial);
+                    swingTrailRenderer.sharedMaterial.SetColor("_TintColor", new Color32(121, 255, 107, 255));
+                    _texRampPoison.WhenCompleted(t => swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", t.Result));
+                }
+            }
+            if (crocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
+            {
+                swingTrailDistortion.localScale *= multiplier;
+            }
+            if (crocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
+            {
+                flash.localScale *= multiplier;
+            }
+            return crocoSuperBiteEffect;
         }
 
         private void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)

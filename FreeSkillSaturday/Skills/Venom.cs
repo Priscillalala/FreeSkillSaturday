@@ -16,6 +16,7 @@ using MonoMod.Cil;
 using EntityStates.BrotherMonster;
 using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
+using System.Threading.Tasks;
 
 namespace FreeItemFriday.Skills
 {
@@ -28,7 +29,7 @@ namespace FreeItemFriday.Skills
         public static bool enableMithrixAttackSpeedFix = true;
 
         public static DotController.DotIndex ToxinDot { get; private set; }
-        public static Material matToxin { get; private set; }
+        //public static Material matToxin { get; private set; }
 
         public void Awake()
         {
@@ -41,13 +42,17 @@ namespace FreeItemFriday.Skills
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
 
-            Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset").Completed += handle =>
+            IvyLibrary.LoadAddressableAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset")
+                .WhenCompleted(t => t.Result.AddSkill(Content.Skills.CrocoPassiveToxin, Content.Achievements.CrocoKillBossCloaked.UnlockableDef));
+            /*Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset").Completed += handle =>
             {
                 handle.Result.AddSkill(Content.Skills.CrocoPassiveToxin, Content.Achievements.CrocoKillBossCloaked.UnlockableDef);
-            };
+            };*/
 
-            Content.Buffs.Toxin = Expansion.DefineBuff("Toxin")
-                .SetIconSprite(Addressables.LoadAssetAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif").WaitForCompletion(), new Color32(156, 123, 255, 255));
+            Content.Buffs.Toxin = Expansion.DefineBuff("Toxin");
+            IvyLibrary.LoadAddressableAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif")
+                .WhenCompleted(t => Content.Buffs.Toxin.SetIconSprite(t.Result, new Color32(156, 123, 255, 255)));
+                //.SetIconSprite(Addressables.LoadAssetAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif").WaitForCompletion(), new Color32(156, 123, 255, 255));
 
             Content.Buffs.ToxinSlow = Expansion.DefineBuff("ToxinSlow")
                 //.SetIconSprite(Assets.LoadAsset<Sprite>("texThereminIcon"), Color.blue)
@@ -55,7 +60,7 @@ namespace FreeItemFriday.Skills
 
             ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Content.Buffs.Toxin);
 
-            matToxin = new Material(Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat").WaitForCompletion());
+            /*matToxin = new Material(Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat").WaitForCompletion());
             matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
             matToxin.SetFloat("_AlphaBoost", 2.5f);
             Addressables.LoadAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png").Completed += handle =>
@@ -71,7 +76,9 @@ namespace FreeItemFriday.Skills
             {
                 overlayMaterial = matToxin,
                 fireEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/PoisonEffect.prefab").WaitForCompletion()
-            };
+            };*/
+
+            CreateToxicBurnEffectParamsAsync().WhenCompleted(t => ToxinBuffBehaviour.toxinBurnEffectParams = t.Result);
 
             On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
             //GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
@@ -83,6 +90,24 @@ namespace FreeItemFriday.Skills
                 IL.EntityStates.BrotherMonster.WeaponSlam.FixedUpdate += FixWeaponSlamDuration;
                 IL.EntityStates.BrotherMonster.WeaponSlam.GetMinimumInterruptPriority += FixWeaponSlamPriorityDuration;
             }
+        }
+
+        public async Task<BurnEffectController.EffectParams> CreateToxicBurnEffectParamsAsync()
+        {
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/Croco/matPoisoned.mat", out var _matPoisoned);
+            IvyLibrary.LoadAddressableAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png", out var _texRampTritoneSmoothed);
+            IvyLibrary.LoadAddressableAsync<Texture>("RoR2/Base/Common/texCloudLightning1.png", out var _texCloudLightning1);
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/Croco/PoisonEffect.prefab", out var _poisonEffect);
+            Material matToxin = new Material(await _matPoisoned);
+            matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
+            matToxin.SetFloat("_AlphaBoost", 2.5f);
+            _texRampTritoneSmoothed.WhenCompleted(t => matToxin.SetTexture("_RemapTex", t.Result));
+            _texCloudLightning1.WhenCompleted(t => matToxin.SetTexture("_Cloud2Tex", t.Result));
+            return new BurnEffectController.EffectParams
+            {
+                overlayMaterial = matToxin,
+                fireEffectPrefab = await _poisonEffect,
+            };
         }
 
         private void DotController_OnDotStackAddedServer(On.RoR2.DotController.orig_OnDotStackAddedServer orig, DotController self, object _dotStack)

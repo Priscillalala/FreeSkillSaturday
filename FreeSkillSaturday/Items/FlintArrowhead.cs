@@ -8,6 +8,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement;
 using HG;
 using FreeItemFriday.Achievements;
+using System.Threading.Tasks;
 
 namespace FreeItemFriday.Items
 {
@@ -54,9 +55,9 @@ namespace FreeItemFriday.Items
             Idrs.VoidFiend.AddDisplayRule(itemDisplay, "ShoulderL", new Vector3(0.063F, 0.289F, 0.052F), new Vector3(13.815F, 321.452F, 169.227F), new Vector3(0.597F, 0.597F, 0.597F));
             Idrs.Scavenger.AddDisplayRule(itemDisplay, "Weapon", new Vector3(3.037F, 8.08F, 2.629F), new Vector3(45.304F, 318.616F, 106.156F), new Vector3(5.5F, 5.5F, 5.5F));
 
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab").Completed += handle =>
+            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab").Completed += handle =>
             {
-                impactArrowhead = handle.Result.InstantiateClone("ImpactArrowhead", false);
+                impactArrowhead = IvyLibrary.CreatePrefab(handle.Result, "ImpactArrowhead");
 
                 if (impactArrowhead.TryGetComponent(out EffectComponent effectComponent))
                 {
@@ -84,17 +85,63 @@ namespace FreeItemFriday.Items
                 }
                 Expansion.AddEffectPrefab(impactArrowhead);
 
-                impactArrowheadStronger = impactArrowhead.InstantiateClone("ImpactArrowHeadStronger", false);
+                impactArrowheadStronger = IvyLibrary.CreatePrefab(impactArrowhead, "ImpactArrowHeadStronger");
                 Addressables.LoadAssetAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat").Completed += handle =>
                 {
                     impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = handle.Result;
                 };
                 //impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().material = Addressables.LoadAssetAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat").WaitForCompletion();
                 Expansion.AddEffectPrefab(impactArrowheadStronger);
-            };
+            };*/
+
+            Task<GameObject> _impactArrowhead = CreateImpactArrowheadAsync();
+            _impactArrowhead.WhenCompleted(t => impactArrowhead = t.Result);
+            CreateImpactArrowheadStrongerAsync(_impactArrowhead).WhenCompleted(t => impactArrowheadStronger = t.Result);
 
             On.RoR2.DotController.InitDotCatalog += DotController_InitDotCatalog;
             Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
+        }
+
+        public async Task<GameObject> CreateImpactArrowheadAsync()
+        {
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab", out var _omniExplosionVFXQuick);
+            GameObject impactArrowhead = IvyLibrary.CreatePrefab(await _omniExplosionVFXQuick, "ImpactArrowhead");
+
+            if (impactArrowhead.TryGetComponent(out EffectComponent effectComponent))
+            {
+                effectComponent.soundName = "Play_item_proc_strengthenBurn";
+            }
+            if (impactArrowhead.TryGetComponent(out VFXAttributes vFXAttributes))
+            {
+                vFXAttributes.vfxPriority = VFXAttributes.VFXPriority.Low;
+            }
+            if (impactArrowhead.TryGetComponent(out OmniEffect omniEffect))
+            {
+                for (int i = omniEffect.omniEffectGroups.Length - 1; i >= 0; i--)
+                {
+                    switch (omniEffect.omniEffectGroups[i].name)
+                    {
+                        case "Scaled Smoke":
+                        case "Smoke Ring":
+                        case "Area Indicator Ring":
+                        case "Unscaled Smoke":
+                        case "Flames":
+                            ArrayUtils.ArrayRemoveAtAndResize(ref omniEffect.omniEffectGroups, i);
+                            break;
+                    }
+                }
+            }
+            Expansion.AddEffectPrefab(impactArrowhead);
+            return impactArrowhead;
+        }
+
+        public async Task<GameObject> CreateImpactArrowheadStrongerAsync(Task<GameObject> _impactArrowhead)
+        {
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat", out var _matOmniHitspark3Gasoline);
+            GameObject impactArrowheadStronger = IvyLibrary.CreatePrefab(await _impactArrowhead, "ImpactArrowHeadStronger");
+            _matOmniHitspark3Gasoline.WhenCompleted(t => impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = t.Result);
+            Expansion.AddEffectPrefab(impactArrowheadStronger);
+            return impactArrowheadStronger;
         }
 
         private void DotController_InitDotCatalog(On.RoR2.DotController.orig_InitDotCatalog orig)

@@ -38,6 +38,7 @@ namespace FreeItemFriday
         {
             [CanBeNull] public static SkillDef CrocoPassiveToxin;
             [CanBeNull] public static SkillDef CrocoSuperBite;
+            [CanBeNull] public static SkillDef RailgunnerElectricGrenade;
         }
 
         public static class Achievements
@@ -47,6 +48,7 @@ namespace FreeItemFriday
             [CanBeNull] public static AchievementWrapper CompleteMultiplayerUnknownEnding;
             [CanBeNull] public static AchievementWrapper CrocoKillBossCloaked;
             [CanBeNull] public static AchievementWrapper CrocoBeatArenaFast;
+            [CanBeNull] public static AchievementWrapper RailgunnerTravelDistance;
         }
     }
 }

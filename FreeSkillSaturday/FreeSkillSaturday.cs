@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace FreeItemFriday
 {
-    [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.3.1")]
+    [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.4.0")]
     [BepInConfig("FreeItemFriday", BepInConfig.ComponentGroupingFlags.ByComponent | BepInConfig.ComponentGroupingFlags.ByNamespace)]
     public class FreeSkillSaturday : BaseUnityPlugin<FreeSkillSaturday>
     {

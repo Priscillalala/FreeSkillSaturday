@@ -60,9 +60,11 @@ namespace FreeItemFriday.Items
         {
             [ItemDefAssociation(useOnServer = true, useOnClient = true)]
             public static ItemDef GetItemDef() => Content.Items.Theremin;
+
             public float currentBonus;
             public float currentBonusCoefficient;
             public int lastPercentBonus;
+            
             public void FixedUpdate()
             {
                 if (TeleporterUtil.TryLocateTeleporter(out Vector3 position))

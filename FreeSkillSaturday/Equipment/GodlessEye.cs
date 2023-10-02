@@ -11,6 +11,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using FreeItemFriday.Achievements;
 using Ivyl;
+using System.Threading.Tasks;
 
 namespace FreeItemFriday.Equipment
 {
@@ -26,18 +27,36 @@ namespace FreeItemFriday.Equipment
         {
             GameObject pickupModelPrefab = Assets.LoadAsset<GameObject>("PickupDeathEye");
 
-            MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
+            /*MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
             List<Material> sharedMats = new List<Material>(); 
             modelRenderer.GetSharedMaterials(sharedMats);
             sharedMats[1] = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").WaitForCompletion();
-            modelRenderer.SetSharedMaterials(sharedMats);
+            modelRenderer.SetSharedMaterials(sharedMats);*/
 
-            GameObject consumedpickupModelPrefab = pickupModelPrefab.InstantiateClone("PickupDeathEyeConsumed", false);
-            DestroyImmediate(consumedpickupModelPrefab.transform.Find("EyeBallFX").gameObject);
+            GameObject consumedPickupModelPrefab = IvyLibrary.CreatePrefab(pickupModelPrefab, "PickupDeathEyeConsumed");
+            DestroyImmediate(consumedPickupModelPrefab.transform.Find("EyeBallFX").gameObject);
 
-            pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat").WaitForCompletion();
-            pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat").WaitForCompletion();
-            pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat").WaitForCompletion();
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").WhenCompleted(t =>
+            {
+                MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
+                Material[] sharedMaterials = modelRenderer.sharedMaterials;
+                sharedMaterials[1] = t.Result;
+                modelRenderer.sharedMaterials = sharedMaterials;
+                consumedPickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>().sharedMaterials = sharedMaterials;
+            });
+
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat")
+                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = t.Result);
+            
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat")
+                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = t.Result);
+            
+            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat")
+                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = t.Result);
+
+            //pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat").WaitForCompletion();
+            //pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat").WaitForCompletion();
+            //pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat").WaitForCompletion();
 
             Content.Equipment.DeathEye = Expansion.DefineEquipment("DeathEye")
                 .SetIconSprite(Assets.LoadAsset<Sprite>("texDeathEyeIcon"))
@@ -53,7 +72,7 @@ namespace FreeItemFriday.Equipment
                 .SetEquipmentType(EquipmentType.Lunar)
                 .SetAvailability(EquipmentAvailability.Never)
                 .SetFlags(EquipmentFlags.NeverRandomlyTriggered | EquipmentFlags.EnigmaIncompatible)
-                .SetPickupModelPrefab(consumedpickupModelPrefab);
+                .SetPickupModelPrefab(consumedPickupModelPrefab);
             Content.Equipment.DeathEyeConsumed.colorIndex = ColorCatalog.ColorIndex.Unaffordable;
 
             Content.Achievements.CompleteMultiplayerUnknownEnding = Expansion.DefineAchievementForEquipment("CompleteMultiplayerUnknownEnding", Content.Equipment.DeathEye)
@@ -62,7 +81,7 @@ namespace FreeItemFriday.Equipment
             // Match achievement identifiers from FreeItemFriday
             Content.Achievements.CompleteMultiplayerUnknownEnding.AchievementDef.identifier = "CompleteMultiplayerUnknownEnding";
 
-            GameObject displayModelPrefab = new GameObject().InstantiateClone("DisplayDeathEye", false);
+            GameObject displayModelPrefab = IvyLibrary.CreatePrefab("DisplayDeathEye");
             displayModelPrefab.AddComponent<ItemDisplay>();
             ItemFollower itemFollower = displayModelPrefab.AddComponent<ItemFollower>();
             itemFollower.targetObject = displayModelPrefab;
@@ -70,10 +89,10 @@ namespace FreeItemFriday.Equipment
             itemFollower.distanceDampTime = 0.005f;
             itemFollower.distanceMaxSpeed = 200f;
 
-            GameObject consumedDisplayModelPrefab = displayModelPrefab.InstantiateClone("DisplayDeathEyeConsumed", false);
+            GameObject consumedDisplayModelPrefab = IvyLibrary.CreatePrefab(displayModelPrefab, "DisplayDeathEyeConsumed");
             ItemFollower consumedItemFollower = consumedDisplayModelPrefab.GetComponent<ItemFollower>();
             consumedItemFollower.targetObject = consumedDisplayModelPrefab;
-            consumedItemFollower.followerPrefab = consumedpickupModelPrefab;
+            consumedItemFollower.followerPrefab = consumedPickupModelPrefab;
 
             ItemDisplaySpec[] itemDisplays = new[]
             {
@@ -96,17 +115,31 @@ namespace FreeItemFriday.Equipment
             Idrs.VoidFiend.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.006F, 0.322F, -0.217F), new Vector3(357.745F, 91.815F, 321.156F), new Vector3(0.069F, 0.069F, 0.069F));
             Idrs.EquipmentDrone.AddDisplayRule(itemDisplays, "HeadCenter", new Vector3(0F, 0F, 1.987F), new Vector3(0F, 90F, 90F), new Vector3(0.351F, 0.351F, 0.351F));
 
-            Addressables.LoadAssetAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab").Completed += handle =>
-            {
-                delayedDeathHandler = handle.Result.transform.Find("Stage1FX").gameObject.InstantiateClone("DelayedDeathHandler", false);
-                delayedDeathHandler.SetActive(true);
-                delayedDeathHandler.AddComponent<NetworkIdentity>();
-                PrefabAPI.RegisterNetworkPrefab(delayedDeathHandler);
-                delayedDeathHandler.AddComponent<DelayedDeathEye>();
-                delayedDeathHandler.AddComponent<DestroyOnTimer>().duration = duration;
-                DestroyImmediate(delayedDeathHandler.transform.Find("LongLifeNoiseTrails, Bright").gameObject);
-                DestroyImmediate(delayedDeathHandler.transform.Find("PersistentLight").gameObject);
-            };
+            CreateDelayedDeathHandlerAsync().WhenCompleted(t => delayedDeathHandler = t.Result);
+        }
+
+        public async void SetupModelsAsync()
+        {
+            Task<Material> loadMatMSObeliskLightning = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").Task;
+            Task<Material> loadMatMSObeliskHeart = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat").Task;
+            Task<Material> loadMatMSStarsLink = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat").Task;
+            Task<Material> loadMatJellyfishLightning = Addressables.LoadAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat").Task;
+            
+        }
+
+        public async Task<GameObject> CreateDelayedDeathHandlerAsync()
+        {
+            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab", out var _MSObelisk);
+            //Task<GameObject> loadMSObelisk = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab").Task;
+            GameObject delayedDeathHandler = IvyLibrary.CreatePrefab((await _MSObelisk).transform.Find("Stage1FX").gameObject, "DelayedDeathHandler");
+            delayedDeathHandler.SetActive(true);
+            delayedDeathHandler.AddComponent<NetworkIdentity>();
+            delayedDeathHandler.AddComponent<DelayedDeathEye>();
+            delayedDeathHandler.AddComponent<DestroyOnTimer>().duration = duration;
+            DestroyImmediate(delayedDeathHandler.transform.Find("LongLifeNoiseTrails, Bright").gameObject);
+            DestroyImmediate(delayedDeathHandler.transform.Find("PersistentLight").gameObject);
+            Expansion.NetworkedObjectPrefabs.Add(delayedDeathHandler);
+            return delayedDeathHandler;
         }
 
         public bool FireDeathEye(EquipmentSlot equipmentSlot)
