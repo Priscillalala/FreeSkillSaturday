@@ -1,5 +1,5 @@
 # FreeItemFriday
-A content mod powered by IVYL. Currently features 3 new items & equipment, 2 new alternate skills, and a new artifact. FreeItemFriday was recently rewritten; you can find the old FreeItemFriday built with GrooveSharedUtils [here](https://github.com/Priscillalala/FreeItemFriday).
+A content mod powered by IVYL. Currently features 3 new items & equipment, 3 new alternate skills, and a new artifact. FreeItemFriday was recently rewritten; you can find the old FreeItemFriday built with GrooveSharedUtils [here](https://github.com/Priscillalala/FreeItemFriday).
 
 ## Items
 <table>
@@ -35,6 +35,11 @@ A content mod powered by IVYL. Currently features 3 new items & equipment, 2 new
         <td><img src="https://cdn.discordapp.com/attachments/965315944966668288/1074093938585124864/texUnlockIcon.png" alt="Unlockable"></td>
         <td>Requires 'Acrid: Virulence'</td>
         <td>As Acrid, clear the Void Fields on Monsoon before monsters reach Lv. 10.</td>
+    </tr>
+    <tr>
+        <td><img src="https://cdn.discordapp.com/attachments/965315944966668288/1074093938585124864/texUnlockIcon.png" alt="Unlockable"></td>
+        <td>Requires 'Railgunner: Hipster'</td>
+        <td>As Railgunner, complete the Primordial Teleporter event without scoping in.</td>
     </tr>
 </table>
 

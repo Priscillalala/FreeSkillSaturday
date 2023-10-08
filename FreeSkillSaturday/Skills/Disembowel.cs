@@ -49,55 +49,17 @@ namespace FreeItemFriday.Skills
 
             SkillFamily crocoBodySpecialFamily = await _crocoBodySpecialFamily;
             crocoBodySpecialFamily.AddSkill(Content.Skills.CrocoSuperBite, Content.Achievements.CrocoBeatArenaFast.UnlockableDef);
-            /*Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset").Completed += handle =>
-            {
-                handle.Result.AddSkill(Content.Skills.CrocoSuperBite, Content.Achievements.CrocoBeatArenaFast.UnlockableDef);
-            };*/
-
-            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab").Completed += handle =>
-            {
-                CrocoSuperBiteEffect = IvyLibrary.CreatePrefab(handle.Result, "CrocoSuperBiteEffect");
-                Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat").Completed += handle =>
-                {
-                    if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
-                    {
-                        gooRenderer.sharedMaterial = handle.Result;
-                    }
-                };
-                Addressables.LoadAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png").Completed += handle =>
-                {
-                    if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail) && swingTrail.TryGetComponent(out ParticleSystemRenderer swingTrailRenderer))
-                    {
-                        swingTrailRenderer.sharedMaterial = new Material(swingTrailRenderer.sharedMaterial);
-                        swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", handle.Result);
-                        swingTrailRenderer.sharedMaterial.SetColor("_TintColor", new Color32(121, 255, 107, 255));
-                    }
-                };
-                float multiplier = 1.2f;
-                if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
-                {
-                    swingTrail.localScale *= multiplier;
-                }
-                if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
-                {
-                    swingTrailDistortion.localScale *= multiplier;
-                }
-                if (CrocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
-                {
-                    flash.localScale *= multiplier;
-                }
-            };*/
 
             CrocoSuperBiteEffect = await _crocoSuperBiteEffect;
         }
 
-        public async Task<GameObject> CreateCrocoSuperBiteEffectAsync()
+        public static async Task<GameObject> CreateCrocoSuperBiteEffectAsync()
         {
             using RoR2Asset<GameObject> _crocoBiteEffect = "RoR2/Base/Croco/CrocoBiteEffect.prefab";
             using RoR2Asset<Material> _matCrocoGooSmall2 = "RoR2/Base/Croco/matCrocoGooSmall2.mat";
             using RoR2Asset<Texture> _texRampPoison = "RoR2/Base/Common/ColorRamps/texRampPoison.png";
 
-            GameObject crocoSuperBiteEffect = IvyLibrary.CreatePrefab(await _crocoBiteEffect, "CrocoSuperBiteEffect");
+            GameObject crocoSuperBiteEffect = Prefabs.ClonePrefab(await _crocoBiteEffect, "CrocoSuperBiteEffect");
             if (crocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
             {
                 gooRenderer.sharedMaterial = await _matCrocoGooSmall2;

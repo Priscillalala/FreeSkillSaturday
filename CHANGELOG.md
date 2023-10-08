@@ -1,3 +1,9 @@
+## 1.4.0
+* New Alternate Skill: Pulse Grenade
+* Removed PrefabAPI dependency
+* Reworked the codebase to load asynchronously alongside addressables
+	* Keep an eye out for any bugs this may have created...The mod may be unstable for a few patches!
+
 ## 1.3.1
 * Fix Disembowel sharing the Venom achievement
 

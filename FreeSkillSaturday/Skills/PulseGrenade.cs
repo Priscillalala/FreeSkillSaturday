@@ -26,14 +26,9 @@ using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-namespace System.Runtime.CompilerServices
-{
-    internal static class IsExternalInit { }
-}
-
 namespace FreeItemFriday.Skills
 {
-    public class ElectricGrenadeSkill : FreeSkillSaturday.Behavior
+    public class PulseGrenade : FreeSkillSaturday.Behavior
     {
         public static float damageCoefficient = 3f;
         public static float duration = 1.3f;
@@ -42,22 +37,13 @@ namespace FreeItemFriday.Skills
         public static DamageAPI.ModdedDamageType Shock2s { get; private set; }
         public static GameObject GrenadeProjectile { get; private set; }
 
-        public NetworkSoundEventDef nseElectricGrenadeExpired;
-
         public async void Awake()
         {
-            //using RoR2AssetGroup<ItemDisplayRuleSet> _idrs = RoR2AssetGroups.ItemDisplayRuleSets;
             using RoR2Asset<RailgunSkillDef> _railgunnerBodyFirePistol = "RoR2/DLC1/Railgunner/RailgunnerBodyFirePistol.asset";
             using RoR2Asset<SkillFamily> _railgunnerBodyPrimaryFamily = "RoR2/DLC1/Railgunner/RailgunnerBodyPrimaryFamily.asset";
             using RoR2Asset<GameObject> _railgunnerCrosshair = "RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab";
             using RoR2Asset<GameObject> _railgunnerCryochargeCrosshair = "RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab";
-            using Task<GameObject> _grenadeProjectile = CreateGrenadeProjectileAsync();
-
-            /*Logger.LogInfo("Resource locations:");
-            foreach (string key in (await _idrs).Keys)
-            {
-                Logger.LogInfo(key);
-            }*/
+            using Task<GameObject> _grenadeProjectile = CreateGrenadeProjectileAsync(Shock2s = DamageAPI.ReserveDamageType());
 
             Content.Skills.RailgunnerElectricGrenade = Expansion.DefineSkill<RailgunSkillDef>("RailgunnerElectricGrenade")
                 .SetIconSprite(Assets.LoadAsset<Sprite>("texRailgunnerElectricGrenadeIcon"))
@@ -71,19 +57,15 @@ namespace FreeItemFriday.Skills
                 .SetKeywordTokens("KEYWORD_SHOCKING");
             (Content.Skills.RailgunnerElectricGrenade as RailgunSkillDef).offlineIcon = (await _railgunnerBodyFirePistol).offlineIcon;
 
-            Content.Achievements.RailgunnerTravelDistance = Expansion.DefineAchievementForSkill("RailgunnerTravelDistance", Content.Skills.RailgunnerElectricGrenade)
+            Content.Achievements.RailgunnerHipster = Expansion.DefineAchievementForSkill("RailgunnerHipster", Content.Skills.RailgunnerElectricGrenade)
                 .SetIconSprite(Content.Skills.RailgunnerElectricGrenade.icon)
-                .SetTrackerTypes(typeof(RailgunnerTravelDistanceAchievement), null);
+                .SetTrackerTypes(typeof(RailgunnerHipsterAchievement), null);
 
             SkillFamily railgunnerBodyPrimaryFamily = await _railgunnerBodyPrimaryFamily;
-            railgunnerBodyPrimaryFamily.AddSkill(Content.Skills.RailgunnerElectricGrenade, Content.Achievements.RailgunnerTravelDistance.UnlockableDef);
-
-            Shock2s = DamageAPI.ReserveDamageType();
-
-            nseElectricGrenadeExpired = Expansion.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
+            railgunnerBodyPrimaryFamily.AddSkill(Content.Skills.RailgunnerElectricGrenade, Content.Achievements.RailgunnerHipster.UnlockableDef);
 
             GameObject railgunnerCrossHair = await _railgunnerCrosshair;
-            SetupRailgunnerCrosshair.prefab = IvyLibrary.CreatePrefab(railgunnerCrossHair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
+            SetupRailgunnerCrosshair.prefab = Prefabs.ClonePrefab(railgunnerCrossHair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
             Color color = new Color32(198, 169, 217, 255);
             foreach (Image image in SetupRailgunnerCrosshair.prefab.GetComponentsInChildren<Image>())
             {
@@ -100,7 +82,7 @@ namespace FreeItemFriday.Skills
             GrenadeProjectile = await _grenadeProjectile;
         }
 
-        public async Task<GameObject> CreateGrenadeProjectileAsync()
+        public static async Task<GameObject> CreateGrenadeProjectileAsync(DamageAPI.ModdedDamageType shock2s)
         {
             using Task<GameObject> _grenadeExplosionEffect = CreateGrenadeExplosionEffectAsync();
             using Task<GameObject> _grenadeGhost = CreateGrenadeGhostAsync();
@@ -108,7 +90,7 @@ namespace FreeItemFriday.Skills
             using RoR2Asset<NetworkSoundEventDef> _nseCommandoGrenadeBounce = "RoR2/Base/Commando/nseCommandoGrenadeBounce.asset";
             using RoR2Asset<SkinDef> _skinRailGunnerAlt = "RoR2/DLC1/Railgunner/skinRailGunnerAlt.asset";
             
-            GameObject grenadeProjectile = IvyLibrary.CreatePrefab(await _engiGrenadeProjectile, "RailgunnerElectricGrenadeProjectile");
+            GameObject grenadeProjectile = Prefabs.ClonePrefab(await _engiGrenadeProjectile, "RailgunnerElectricGrenadeProjectile");
             if (grenadeProjectile.TryGetComponent(out ProjectileDamage projectileDamage))
             {
                 projectileDamage.damageType = DamageType.Shock5s;
@@ -117,7 +99,7 @@ namespace FreeItemFriday.Skills
             {
                 projectileImpactExplosion.blastRadius = 5f;
                 projectileImpactExplosion.lifetimeAfterImpact = 0.15f;
-                projectileImpactExplosion.lifetimeExpiredSound = nseElectricGrenadeExpired;
+                projectileImpactExplosion.lifetimeExpiredSound = Expansion.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
                 projectileImpactExplosion.offsetForLifetimeExpiredSound = 0.05f;
                 projectileImpactExplosion.impactEffect = await _grenadeExplosionEffect;
             }
@@ -138,13 +120,13 @@ namespace FreeItemFriday.Skills
             {
                 applyTorqueOnStart.localTorque = Vector3.one * 100f;
             }
-            grenadeProjectile.AddComponent<DamageAPI.ModdedDamageTypeHolderComponent>().Add(Shock2s);
+            grenadeProjectile.AddComponent<DamageAPI.ModdedDamageTypeHolderComponent>().Add(shock2s);
             DestroyImmediate(grenadeProjectile.GetComponent<AntiGravityForce>());
             GameObject grenadeGhost = await _grenadeGhost;
             grenadeProjectile.GetComponent<ProjectileController>().ghostPrefab = grenadeGhost;
             Expansion.ProjectilePrefabs.Add(grenadeProjectile);
 
-            GameObject grenadeGhostReskin = IvyLibrary.CreatePrefab(grenadeGhost, "RailgunnerElectricGrenadeGhostReskin");
+            GameObject grenadeGhostReskin = Prefabs.ClonePrefab(grenadeGhost, "RailgunnerElectricGrenadeGhostReskin");
             if (grenadeGhostReskin.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenadeReskin) && mdlEngiGrenadeReskin.TryGetComponent(out MeshRenderer meshRendererReskin))
             {
                 Material matRailgunnerElectricGrenadeAlt = new Material(meshRendererReskin.sharedMaterial);
@@ -162,22 +144,22 @@ namespace FreeItemFriday.Skills
             return grenadeProjectile;
         }
 
-        public async Task<GameObject> CreateGrenadeExplosionEffectAsync()
+        public static async Task<GameObject> CreateGrenadeExplosionEffectAsync()
         {
             using RoR2Asset<GameObject> _captainTazerSupplyDropNova = "RoR2/Base/Captain/CaptainTazerSupplyDropNova.prefab";
 
-            GameObject grenadeExplosionEffect = IvyLibrary.CreatePrefab(await _captainTazerSupplyDropNova, "RailgunnerElectricGrenadeExplosion");
+            GameObject grenadeExplosionEffect = Prefabs.ClonePrefab(await _captainTazerSupplyDropNova, "RailgunnerElectricGrenadeExplosion");
             grenadeExplosionEffect.GetComponent<EffectComponent>().soundName = "Play_roboBall_attack1_explode";
             grenadeExplosionEffect.GetComponent<VFXAttributes>().vfxPriority = VFXAttributes.VFXPriority.Always;
             Expansion.AddEffectPrefab(grenadeExplosionEffect);
             return grenadeExplosionEffect;
         }
 
-        public async Task<GameObject> CreateGrenadeGhostAsync()
+        public static async Task<GameObject> CreateGrenadeGhostAsync()
         {
             using RoR2Asset<GameObject> _engiGrenadeGhost = "RoR2/Base/Engi/EngiGrenadeGhost.prefab";
 
-            GameObject grenadeGhost = IvyLibrary.CreatePrefab(await _engiGrenadeGhost, "RailgunnerElectricGrenadeGhost");
+            GameObject grenadeGhost = Prefabs.ClonePrefab(await _engiGrenadeGhost, "RailgunnerElectricGrenadeGhost");
             if (grenadeGhost.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenade))
             {
                 mdlEngiGrenade.localScale = new Vector3(0.3f, 0.3f, 0.5f);
@@ -198,7 +180,7 @@ namespace FreeItemFriday.Skills
             Task<GameObject> loadRailgunnerCrosshair = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab").Task;
             Task<GameObject> loadRailgunnerCryochargeCrosshair = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab").Task;
             GameObject railgunnerCrosshair = await loadRailgunnerCrosshair;
-            SetupRailgunnerCrosshair.prefab = IvyLibrary.CreatePrefab(railgunnerCrosshair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
+            SetupRailgunnerCrosshair.prefab = Prefabs.ClonePrefab(railgunnerCrosshair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
             Color color = new Color32(198, 169, 217, 255);
             foreach (Image image in SetupRailgunnerCrosshair.prefab.GetComponentsInChildren<Image>())
             {
@@ -237,7 +219,7 @@ namespace FreeItemFriday.Skills
                     return duration;
                 });
             }
-            else Logger.LogError($"{nameof(ElectricGrenadeSkill)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
+            else Logger.LogError($"{nameof(PulseGrenade)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
         }
 
         public class SetupRailgunnerCrosshair : MonoBehaviour

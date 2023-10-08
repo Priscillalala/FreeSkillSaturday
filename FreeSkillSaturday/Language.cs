@@ -50,7 +50,7 @@ namespace FreeItemFriday.Language
             { CrocoSuperBite?.skillDescriptionToken, $"<style=cIsHealing>Poisonous</style>. <style=cIsDamage>Slayer</style>. Lacerate an enemy for <style=cIsDamage>3x{Skills.Disembowel.damageCoefficient:0%} damage</style>, causing <style=cIsDamage>bleeding</style> and <style=cIsHealth>hemorrhaging</style>." },
             { "FSS_KEYWORD_BLEED", $"<style=cKeywordName>Bleed</style><style=cSub>Deal <style=cIsDamage>320%</style> base damage over 4s. <i>Bleed can stack.</i></style>" },
             { RailgunnerElectricGrenade?.skillNameToken, $"Pulse Grenade" },
-            { RailgunnerElectricGrenade?.skillDescriptionToken, $"<style=cIsDamage>Shocking</style>. Fire a grenade that explodes for <style=cIsDamage>{Skills.ElectricGrenadeSkill.damageCoefficient:0%} damage</style>." },
+            { RailgunnerElectricGrenade?.skillDescriptionToken, $"<style=cIsDamage>Shocking</style>. Fire a grenade that explodes for <style=cIsDamage>{Skills.PulseGrenade.damageCoefficient:0%} damage</style>." },
             #endregion
 
             #region achievements
@@ -66,6 +66,8 @@ namespace FreeItemFriday.Language
             { CrocoBeatArenaFast?.GetDescriptionToken(), "As Acrid, clear the Void Fields on Monsoon before monsters reach Lv. 10." },
             { RailgunnerTravelDistance?.GetNameToken(), "Railgunner: Star Trek" },
             { RailgunnerTravelDistance?.GetDescriptionToken(), "As Railgunner, travel 10 miles in a single run." },
+            { RailgunnerHipster?.GetNameToken(), "Railgunner: Hipster" },
+            { RailgunnerHipster?.GetDescriptionToken(), "As Railgunner, complete the Primordial Teleporter event without scoping in." },
             #endregion
         };
     }

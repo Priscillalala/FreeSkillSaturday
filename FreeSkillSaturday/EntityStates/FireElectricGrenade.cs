@@ -23,16 +23,16 @@ namespace EntityStates.Railgunner.Weapon
             using RoR2Asset<GameObject> _muzzleflashSmokeRing = "RoR2/Base/Common/VFX/MuzzleflashSmokeRing.prefab";
 
             effectPrefab = _muzzleflashSmokeRing.Value;
-            projectilePrefab = FreeItemFriday.Skills.ElectricGrenadeSkill.GrenadeProjectile;
-            damageCoefficient = FreeItemFriday.Skills.ElectricGrenadeSkill.damageCoefficient;
+            projectilePrefab = FreeItemFriday.Skills.PulseGrenade.GrenadeProjectile;
+            damageCoefficient = FreeItemFriday.Skills.PulseGrenade.damageCoefficient;
             force = 600f;
             minSpread = 0f;
             maxSpread = 0f;
-            baseDuration = FreeItemFriday.Skills.ElectricGrenadeSkill.duration;
+            baseDuration = FreeItemFriday.Skills.PulseGrenade.duration;
             recoilAmplitude = 1f;
             attackSoundString = "Play_MULT_m1_grenade_launcher_shoot";
             projectilePitchBonus = -5f;
-            baseDelayBeforeFiringProjectile = FreeItemFriday.Skills.ElectricGrenadeSkill.firingDelay;
+            baseDelayBeforeFiringProjectile = FreeItemFriday.Skills.PulseGrenade.firingDelay;
             targetMuzzle = "MuzzlePistol";
             bloom = 1f;
         }

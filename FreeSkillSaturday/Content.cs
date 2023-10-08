@@ -49,6 +49,7 @@ namespace FreeItemFriday
             [CanBeNull] public static AchievementWrapper CrocoKillBossCloaked;
             [CanBeNull] public static AchievementWrapper CrocoBeatArenaFast;
             [CanBeNull] public static AchievementWrapper RailgunnerTravelDistance;
+            [CanBeNull] public static AchievementWrapper RailgunnerHipster;
         }
     }
 }

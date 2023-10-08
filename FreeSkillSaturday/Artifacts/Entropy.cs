@@ -60,55 +60,25 @@ namespace FreeItemFriday.Artifacts
             // Match achievement identifiers from FreeItemFriday
             Content.Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
 
-            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab").Completed += handle =>
-            {
-                slipperyTerrainFormulaDisplay = IvyLibrary.CreatePrefab(handle.Result, "SlipperyTerrainFormulaDisplay");
-                artifactCode.CopyToFormulaDisplay(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
-                foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
-                {
-                    decal.Fade = 0.15f;
-                }
-                if (slipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
-                {
-                    frame.gameObject.SetActive(false);
-                }
-                if (slipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
-                {
-                    mesh.gameObject.SetActive(false);
-                }
-            };*/
-
             if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
             {
                 renderer.sharedMaterial = await _matArtifact;
             }
-            /*Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").Completed += handle =>
-            {
-                if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
-                {
-                    renderer.sharedMaterial = handle.Result;
-                }
-            };*/
+
             GameObject engiBubbleShield = await _engiBubbleShield;
             if (engiBubbleShield.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
             {
                 activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
             }
-            /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").Completed += handle =>
-            {
-                if (handle.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
-                {
-                    activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
-                }
-            };*/
+
             slipperyTerrainFormulaDisplay = await _slipperyTerrainFormulaDisplay;
         }
 
-        public async Task<GameObject> CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
+        public static async Task<GameObject> CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
         {
             using RoR2Asset<GameObject> _artifactFormulaDisplay = "RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab";
 
-            GameObject slipperyTerrainFormulaDisplay = IvyLibrary.CreatePrefab(await _artifactFormulaDisplay, "SlipperyTerrainFormulaDisplay");
+            GameObject slipperyTerrainFormulaDisplay = Prefabs.ClonePrefab(await _artifactFormulaDisplay, "SlipperyTerrainFormulaDisplay");
             await artifactCode.CopyToFormulaDisplayAsync(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
             foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
             {
@@ -128,7 +98,6 @@ namespace FreeItemFriday.Artifacts
         public void OnEnable()
         {
             SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
-
         }
 
         public void OnDisable()
