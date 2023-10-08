@@ -36,12 +36,17 @@ namespace FreeItemFriday.Artifacts
         public Dictionary<Material, Material> SlipperyMaterialInstances { get; private set; }
         public bool DidUpdateSceneVisuals { get; private set; }
 
-        public void Awake()
+        public async void Awake()
         {
+            using RoR2Asset<Material> _matArtifact = "RoR2/Base/artifactworld/matArtifact.mat";
+            using RoR2Asset<GameObject> _engiBubbleShield = "RoR2/Base/Engi/EngiBubbleShield.prefab";
+
             ArtifactCode artifactCode = new ArtifactCode(
                 (ArtifactCompound.Circle, ArtifactCompound.Circle, ArtifactCompound.Circle),
                 (ArtifactCompound.Square, ArtifactCompound.Square, ArtifactCompound.Square),
                 (ArtifactCompound.Triangle, ArtifactCompound.Diamond, ArtifactCompound.Triangle));
+
+            using Task<GameObject> _slipperyTerrainFormulaDisplay = CreateSlipperyTerrainFormulaDisplayAsync(artifactCode);
 
             Content.Artifacts.SlipperyTerrain = Expansion.DefineArtifact("SlipperyTerrain")
                 .SetIconSprites(Assets.LoadAsset<Sprite>("texArtifactSlipperyTerrainEnabled"), Assets.LoadAsset<Sprite>("texArtifactSlipperyTerrainDisabled"))
@@ -73,13 +78,10 @@ namespace FreeItemFriday.Artifacts
                 }
             };*/
 
-            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").WhenCompleted(t =>
+            if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
             {
-                if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
-                {
-                    renderer.sharedMaterial = t.Result;
-                }
-            });
+                renderer.sharedMaterial = await _matArtifact;
+            }
             /*Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat").Completed += handle =>
             {
                 if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
@@ -87,14 +89,11 @@ namespace FreeItemFriday.Artifacts
                     renderer.sharedMaterial = handle.Result;
                 }
             };*/
-
-            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").WhenCompleted(t =>
+            GameObject engiBubbleShield = await _engiBubbleShield;
+            if (engiBubbleShield.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
             {
-                if (t.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
-                {
-                    activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
-                }
-            });
+                activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
+            }
             /*Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab").Completed += handle =>
             {
                 if (handle.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
@@ -102,17 +101,15 @@ namespace FreeItemFriday.Artifacts
                     activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
                 }
             };*/
-
-            CreateSlipperyTerrainFormulaDisplayAsync(artifactCode).WhenCompleted(t => slipperyTerrainFormulaDisplay = t.Result);
-
-            SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+            slipperyTerrainFormulaDisplay = await _slipperyTerrainFormulaDisplay;
         }
 
         public async Task<GameObject> CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
         {
-            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var _artifactFormulaDisplay);
+            using RoR2Asset<GameObject> _artifactFormulaDisplay = "RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab";
+
             GameObject slipperyTerrainFormulaDisplay = IvyLibrary.CreatePrefab(await _artifactFormulaDisplay, "SlipperyTerrainFormulaDisplay");
-            artifactCode.CopyToFormulaDisplay(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
+            await artifactCode.CopyToFormulaDisplayAsync(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
             foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
             {
                 decal.Fade = 0.15f;
@@ -128,6 +125,17 @@ namespace FreeItemFriday.Artifacts
             return slipperyTerrainFormulaDisplay;
         }
         
+        public void OnEnable()
+        {
+            SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+
+        }
+
+        public void OnDisable()
+        {
+            SceneManager.activeSceneChanged -= SceneManager_activeSceneChanged;
+        }
+
         private void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)
         {
             if (newScene.name == "snowyforest" && slipperyTerrainFormulaDisplay)
@@ -155,6 +163,10 @@ namespace FreeItemFriday.Artifacts
                 SlipperyMaterialInstances = new Dictionary<Material, Material>();
             }
 
+            using RoR2Asset<Shader> _HGStandard = "RoR2/Base/Shaders/HGStandard.shader";
+            using RoR2Asset<Shader> _HGSnowTopped = "RoR2/Base/Shaders/HGSnowTopped.shader";
+            using RoR2Asset<Shader> _HGTriplanarTerrainBlend = "RoR2/Base/Shaders/HGTriplanarTerrainBlend.shader";
+
             MeshRenderer[] meshRenderers = FindObjectsOfType<MeshRenderer>();
             for (int i = 0; i < meshRenderers.Length; i++)
             {
@@ -170,13 +182,13 @@ namespace FreeItemFriday.Artifacts
                 }
                 if (!SlipperyMaterialInstances.TryGetValue(mat, out Material matInstance))
                 {
-                    if (mat.shader == Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGStandard.shader").WaitForCompletion())
+                    if (mat.shader == _HGStandard.Value)
                     {
                         matInstance = Instantiate(mat);
                         matInstance.SetFloat("_SpecularStrength", 0.6f);
                         matInstance.SetFloat("_SpecularExponent ", 10f);
                     }
-                    else if (mat.shader == Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGSnowTopped.shader").WaitForCompletion())
+                    else if (mat.shader == _HGSnowTopped.Value)
                     {
                         matInstance = Instantiate(mat);
                         if (matInstance.GetTexture("_SnowNormalTex"))
@@ -192,7 +204,7 @@ namespace FreeItemFriday.Artifacts
                             matInstance.SetFloat("_SpecularExponent", 3f);
                         }
                     }
-                    else if (mat.shader == Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGTriplanarTerrainBlend.shader").WaitForCompletion())
+                    else if (mat.shader == _HGTriplanarTerrainBlend.Value)
                     {
                         matInstance = Instantiate(mat);
                         matInstance.SetFloat("_GreenChannelSpecularStrength", 0.15f);

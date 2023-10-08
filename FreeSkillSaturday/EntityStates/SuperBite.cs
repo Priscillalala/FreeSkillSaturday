@@ -25,20 +25,24 @@ namespace EntityStates.Croco
 
         public SuperBite() : base()
         {
+            using RoR2Asset<GameObject> _omniImpactVFXSlashSyringe = "RoR2/Base/Treebot/OmniImpactVFXSlashSyringe.prefab";
+            using RoR2Asset<NetworkSoundEventDef> _nseAcridM1Hit = "RoR2/Base/Croco/nseAcridM1Hit.asset";
+            using RoR2Asset<GameObject> _crocoComboFinisherSlash = "RoR2/Base/Croco/CrocoComboFinisherSlash.prefab";
+
             baseDuration = 1.2f;
             damageCoefficient = FreeItemFriday.Skills.Disembowel.damageCoefficient;
             hitBoxGroupName = "Slash";
-            hitEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Treebot/OmniImpactVFXSlashSyringe.prefab").WaitForCompletion();
+            hitEffectPrefab = _omniImpactVFXSlashSyringe.Value;
             procCoefficient = 1f;
             hitPauseDuration = 0.1f;
             mecanimHitboxActiveParameter = "Bite.hitBoxActive";
             shorthopVelocityFromHit = 6f;
             beginStateSoundString = "Play_acrid_m2_bite_shoot";
-            impactSound = Addressables.LoadAssetAsync<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridM1Hit.asset").WaitForCompletion();
+            impactSound = _nseAcridM1Hit.Value;
             forceForwardVelocity = true;
             forwardVelocityCurve = (_forwardVelocityCurve ??= new AnimationCurve(new Keyframe(0.17f, 0f), new Keyframe(0.21f, 0.55f), new Keyframe(0.3f, 0f)));
             swingEffectMuzzleString = "Slash3";
-            swingEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoComboFinisherSlash.prefab").WaitForCompletion();
+            swingEffectPrefab = _crocoComboFinisherSlash.Value;
         }
 
         public override bool allowExitFire => false;// characterBody && !characterBody.isSprinting;
@@ -127,7 +131,7 @@ namespace EntityStates.Croco
             currentResetAttackCount++;
             if (currentResetAttackCount >= 2)
             {
-                overlapAttack.impactSound = Addressables.LoadAssetAsync<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridBiteHit.asset").WaitForCompletion().index;
+                overlapAttack.impactSound = new RoR2Asset<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridBiteHit.asset").Value.index;
                 overlapAttack.AddModdedDamageType(FreeItemFriday.Skills.Disembowel.SuperBleedOnHit);
                 CrocoDamageTypeController crocoDamageTypeController = base.GetComponent<CrocoDamageTypeController>();
                 if (crocoDamageTypeController)

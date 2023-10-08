@@ -20,7 +20,9 @@ namespace EntityStates.Railgunner.Weapon
     {
         public FireElectricGrenade() : base()
         {
-            effectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/MuzzleflashSmokeRing.prefab").WaitForCompletion();
+            using RoR2Asset<GameObject> _muzzleflashSmokeRing = "RoR2/Base/Common/VFX/MuzzleflashSmokeRing.prefab";
+
+            effectPrefab = _muzzleflashSmokeRing.Value;
             projectilePrefab = FreeItemFriday.Skills.ElectricGrenadeSkill.GrenadeProjectile;
             damageCoefficient = FreeItemFriday.Skills.ElectricGrenadeSkill.damageCoefficient;
             force = 600f;

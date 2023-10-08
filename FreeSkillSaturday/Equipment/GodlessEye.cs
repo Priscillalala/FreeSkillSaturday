@@ -23,36 +23,37 @@ namespace FreeItemFriday.Equipment
 
         public GameObject delayedDeathHandler;
 
-        public void Awake()
+        public async void Awake()
         {
+            using RoR2AssetGroup<ItemDisplayRuleSet> _idrs = RoR2AssetGroups.ItemDisplayRuleSets;
+            using RoR2Asset<Material> _matMSObeliskLightning = "RoR2/Base/mysteryspace/matMSObeliskLightning.mat";
+            using RoR2Asset<Material> _matMSObeliskHeart = "RoR2/Base/mysteryspace/matMSObeliskHeart.mat";
+            using RoR2Asset<Material> _matMSStarsLink = "RoR2/Base/mysteryspace/matMSStarsLink.mat";
+            using RoR2Asset<Material> _matJellyfishLightning = "RoR2/Base/Common/VFX/matJellyfishLightning.mat";
+            using Task<GameObject> _delayedDeathHandler = CreateDelayedDeathHandlerAsync();
+
             GameObject pickupModelPrefab = Assets.LoadAsset<GameObject>("PickupDeathEye");
 
-            /*MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
-            List<Material> sharedMats = new List<Material>(); 
-            modelRenderer.GetSharedMaterials(sharedMats);
-            sharedMats[1] = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").WaitForCompletion();
-            modelRenderer.SetSharedMaterials(sharedMats);*/
+            MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
+            Material[] sharedMaterials = modelRenderer.sharedMaterials;
+            sharedMaterials[1] = await _matMSObeliskLightning;
+            modelRenderer.sharedMaterials = sharedMaterials;
 
             GameObject consumedPickupModelPrefab = IvyLibrary.CreatePrefab(pickupModelPrefab, "PickupDeathEyeConsumed");
             DestroyImmediate(consumedPickupModelPrefab.transform.Find("EyeBallFX").gameObject);
 
-            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").WhenCompleted(t =>
+            /*IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").WhenCompleted(t =>
             {
                 MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
                 Material[] sharedMaterials = modelRenderer.sharedMaterials;
                 sharedMaterials[1] = t.Result;
                 modelRenderer.sharedMaterials = sharedMaterials;
                 consumedPickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>().sharedMaterials = sharedMaterials;
-            });
+            });*/
 
-            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat")
-                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = t.Result);
-            
-            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat")
-                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = t.Result);
-            
-            IvyLibrary.LoadAddressableAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat")
-                .WhenCompleted(t => pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = t.Result);
+            pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = await _matMSObeliskHeart;
+            pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = await _matMSStarsLink;
+            pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = await _matJellyfishLightning;
 
             //pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat").WaitForCompletion();
             //pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat").WaitForCompletion();
@@ -100,37 +101,29 @@ namespace FreeItemFriday.Equipment
                 new ItemDisplaySpec(Content.Equipment.DeathEyeConsumed, consumedDisplayModelPrefab),
             };
 
-            Idrs.Commando.AddDisplayRule(itemDisplays, "Head", new Vector3(0.001F, 0.545F, -0.061F), new Vector3(0F, 90F, 0F), new Vector3(0.069F, 0.069F, 0.069F));
-            Idrs.Huntress.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.486F, -0.158F), new Vector3(359.97F, 89.949F, 345.155F), new Vector3(0.067F, 0.067F, 0.067F));
-            Idrs.Bandit.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.367F, -0.002F), new Vector3(0F, 89.995F, 0.001F), new Vector3(0.066F, 0.066F, 0.066F));
-            Idrs.MULT.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 4.049F, 3.237F), new Vector3(0.708F, 89.264F, 50.748F), new Vector3(0.111F, 0.111F, 0.111F));
-            Idrs.Engineer.AddDisplayRule(itemDisplays, "Chest", new Vector3(-0.001F, 1.049F, 0.174F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
-            Idrs.Artificer.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.328F, 0.003F), new Vector3(0F, 90F, 0F), new Vector3(0.055F, 0.055F, 0.055F));
-            Idrs.Mercenary.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.452F, -0.01F), new Vector3(0F, 90F, 0F), new Vector3(0.06F, 0.06F, 0.06F));
-            Idrs.REX.AddDisplayRule(itemDisplays, "Chest", new Vector3(0.157F, 3.44F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.148F, 0.148F, 0.148F));
-            Idrs.Loader.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.442F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
-            Idrs.Acrid.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.036F, -0.134F, 3.731F), new Vector3(0.141F, 89.889F, 298.828F), new Vector3(0.152F, 0.152F, 0.152F));
-            Idrs.Captain.AddDisplayRule(itemDisplays, "Base", new Vector3(-0.03F, 0.199F, -1.281F), new Vector3(0F, 90F, 90F), new Vector3(0.062F, 0.062F, 0.062F));
-            Idrs.Railgunner.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.363F, -0.089F), new Vector3(0F, 90F, 0F), new Vector3(0.056F, 0.056F, 0.056F));
-            Idrs.VoidFiend.AddDisplayRule(itemDisplays, "Head", new Vector3(-0.006F, 0.322F, -0.217F), new Vector3(357.745F, 91.815F, 321.156F), new Vector3(0.069F, 0.069F, 0.069F));
-            Idrs.EquipmentDrone.AddDisplayRule(itemDisplays, "HeadCenter", new Vector3(0F, 0F, 1.987F), new Vector3(0F, 90F, 90F), new Vector3(0.351F, 0.351F, 0.351F));
+            var idrs = await _idrs;
+            idrs["idrsCommando"].AddDisplayRule(itemDisplays, "Head", new Vector3(0.001F, 0.545F, -0.061F), new Vector3(0F, 90F, 0F), new Vector3(0.069F, 0.069F, 0.069F));
+            idrs["idrsHuntress"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.486F, -0.158F), new Vector3(359.97F, 89.949F, 345.155F), new Vector3(0.067F, 0.067F, 0.067F));
+            idrs["idrsBandit2"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.367F, -0.002F), new Vector3(0F, 89.995F, 0.001F), new Vector3(0.066F, 0.066F, 0.066F));
+            idrs["idrsToolbot"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 4.049F, 3.237F), new Vector3(0.708F, 89.264F, 50.748F), new Vector3(0.111F, 0.111F, 0.111F));
+            idrs["idrsEngi"].AddDisplayRule(itemDisplays, "Chest", new Vector3(-0.001F, 1.049F, 0.174F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
+            idrs["idrsMage"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.328F, 0.003F), new Vector3(0F, 90F, 0F), new Vector3(0.055F, 0.055F, 0.055F));
+            idrs["idrsMerc"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.452F, -0.01F), new Vector3(0F, 90F, 0F), new Vector3(0.06F, 0.06F, 0.06F));
+            idrs["idrsTreebot"].AddDisplayRule(itemDisplays, "Chest", new Vector3(0.157F, 3.44F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.148F, 0.148F, 0.148F));
+            idrs["idrsLoader"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.442F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
+            idrs["idrsCroco"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.036F, -0.134F, 3.731F), new Vector3(0.141F, 89.889F, 298.828F), new Vector3(0.152F, 0.152F, 0.152F));
+            idrs["idrsCaptain"].AddDisplayRule(itemDisplays, "Base", new Vector3(-0.03F, 0.199F, -1.281F), new Vector3(0F, 90F, 90F), new Vector3(0.062F, 0.062F, 0.062F));
+            idrs["idrsRailGunner"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.363F, -0.089F), new Vector3(0F, 90F, 0F), new Vector3(0.056F, 0.056F, 0.056F));
+            idrs["idrsVoidSurvivor"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.006F, 0.322F, -0.217F), new Vector3(357.745F, 91.815F, 321.156F), new Vector3(0.069F, 0.069F, 0.069F));
+            idrs["idrsEquipmentDrone"].AddDisplayRule(itemDisplays, "HeadCenter", new Vector3(0F, 0F, 1.987F), new Vector3(0F, 90F, 90F), new Vector3(0.351F, 0.351F, 0.351F));
 
-            CreateDelayedDeathHandlerAsync().WhenCompleted(t => delayedDeathHandler = t.Result);
-        }
-
-        public async void SetupModelsAsync()
-        {
-            Task<Material> loadMatMSObeliskLightning = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat").Task;
-            Task<Material> loadMatMSObeliskHeart = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat").Task;
-            Task<Material> loadMatMSStarsLink = Addressables.LoadAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat").Task;
-            Task<Material> loadMatJellyfishLightning = Addressables.LoadAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat").Task;
-            
+            delayedDeathHandler = await _delayedDeathHandler;
         }
 
         public async Task<GameObject> CreateDelayedDeathHandlerAsync()
         {
-            IvyLibrary.LoadAddressableAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab", out var _MSObelisk);
-            //Task<GameObject> loadMSObelisk = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab").Task;
+            using RoR2Asset<GameObject> _MSObelisk = "RoR2/Base/mysteryspace/MSObelisk.prefab";
+
             GameObject delayedDeathHandler = IvyLibrary.CreatePrefab((await _MSObelisk).transform.Find("Stage1FX").gameObject, "DelayedDeathHandler");
             delayedDeathHandler.SetActive(true);
             delayedDeathHandler.AddComponent<NetworkIdentity>();
@@ -226,7 +219,7 @@ namespace FreeItemFriday.Equipment
             public Queue<DeathGroup> deathQueue = new Queue<DeathGroup>();
             public TeamMask cleanupTeams = TeamMask.none;
             private bool hasRunCleanup;
-            private GameObject destroyEffectPrefab;
+            private RoR2Asset<GameObject> destroyEffectPrefab;
 
             public void EnqueueDeath(DeathGroup death)
             {
@@ -235,7 +228,7 @@ namespace FreeItemFriday.Equipment
 
             public void Awake()
             {
-                destroyEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/BrittleDeath.prefab").WaitForCompletion();
+                destroyEffectPrefab = "RoR2/Base/Common/VFX/BrittleDeath.prefab";
             }
 
             public void Start()
@@ -299,7 +292,7 @@ namespace FreeItemFriday.Equipment
                     }
                     victim.master.preventGameOver = false;
                 }
-                EffectManager.SpawnEffect(destroyEffectPrefab, new EffectData
+                EffectManager.SpawnEffect(destroyEffectPrefab.Value, new EffectData
                 {
                     origin = victim.corePosition,
                     scale = victim.radius
