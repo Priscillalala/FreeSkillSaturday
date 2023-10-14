@@ -29,6 +29,13 @@ namespace FreeItemFriday
             [CanBeNull] public static BuffDef ToxinSlow;
         }
 
+        public static class Elites
+        {
+            [CanBeNull] public static EliteWrapper Magnetic;
+            [CanBeNull] public static EliteWrapper Water;
+            [CanBeNull] public static EliteWrapper Barrier;
+        }
+
         public static class Artifacts
         {
             [CanBeNull] public static ArtifactDef SlipperyTerrain;
@@ -39,6 +46,8 @@ namespace FreeItemFriday
             [CanBeNull] public static SkillDef CrocoPassiveToxin;
             [CanBeNull] public static SkillDef CrocoSuperBite;
             [CanBeNull] public static SkillDef RailgunnerElectricGrenade;
+            [CanBeNull] public static SkillDef ToolbotRepair;
+            [CanBeNull] public static SkillDef RailgunnerPassiveBouncingBullets;
         }
 
         public static class Achievements

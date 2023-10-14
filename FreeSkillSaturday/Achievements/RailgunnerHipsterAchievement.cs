@@ -18,17 +18,20 @@ namespace FreeItemFriday.Achievements
 
         public override void OnInstall()
         {
+            using RoR2Asset<GameObject> _lunarTeleporter = "RoR2/Base/Teleporters/LunarTeleporter Variant.prefab";
+
             base.OnInstall();
-            iscLunarTeleporter = "RoR2/Base/Teleporters/iscLunarTeleporter.asset";
             listeningToggle = new ToggleAction(SetListeningTrue, SetListeningFalse);
+            _lunarTeleporter.Value.AddComponent<IsLunarTeleporter>();
         }
 
         public override void OnUninstall()
         {
-            iscLunarTeleporter.Dispose();
             listeningToggle.SetActive(false);
             base.OnUninstall();
         }
+
+        public class IsLunarTeleporter : MonoBehaviour { }
 
         public override void OnBodyRequirementMet()
         {
@@ -44,7 +47,6 @@ namespace FreeItemFriday.Achievements
 
         private void SetListeningTrue()
         {
-            On.RoR2.Run.OnServerTeleporterPlaced += Run_OnServerTeleporterPlaced;
             TeleporterInteraction.onTeleporterBeginChargingGlobal += TeleporterInteraction_onTeleporterBeginChargingGlobal;
             TeleporterInteraction.onTeleporterChargedGlobal += TeleporterInteraction_onTeleporterChargedGlobal;
             On.EntityStates.Railgunner.Scope.BaseActive.OnEnter += BaseActive_OnEnter;
@@ -52,16 +54,9 @@ namespace FreeItemFriday.Achievements
 
         private void SetListeningFalse()
         {
-            On.RoR2.Run.OnServerTeleporterPlaced -= Run_OnServerTeleporterPlaced;
             TeleporterInteraction.onTeleporterBeginChargingGlobal -= TeleporterInteraction_onTeleporterBeginChargingGlobal;
             TeleporterInteraction.onTeleporterChargedGlobal -= TeleporterInteraction_onTeleporterChargedGlobal;
             On.EntityStates.Railgunner.Scope.BaseActive.OnEnter -= BaseActive_OnEnter;
-        }
-
-        private void Run_OnServerTeleporterPlaced(On.RoR2.Run.orig_OnServerTeleporterPlaced orig, Run self, SceneDirector sceneDirector, GameObject teleporter)
-        {
-            teleporterValid = sceneDirector.teleporterSpawnCard && sceneDirector.teleporterSpawnCard == iscLunarTeleporter.Value;
-            orig(self, sceneDirector, teleporter);
         }
 
         private void TeleporterInteraction_onTeleporterBeginChargingGlobal(TeleporterInteraction obj)
@@ -71,7 +66,7 @@ namespace FreeItemFriday.Achievements
 
         private void TeleporterInteraction_onTeleporterChargedGlobal(TeleporterInteraction obj)
         {
-            if (localUser.cachedBody?.healthComponent && localUser.cachedBody.healthComponent.alive && !hasScoped && teleporterValid)
+            if (localUser.cachedBody?.healthComponent && localUser.cachedBody.healthComponent.alive && !hasScoped && obj.gameObject.GetComponent<IsLunarTeleporter>())
             {
                 Grant();
             }
@@ -86,9 +81,7 @@ namespace FreeItemFriday.Achievements
             }
         }
 
-        private RoR2Asset<InteractableSpawnCard> iscLunarTeleporter;
         private ToggleAction listeningToggle;
-        private bool teleporterValid;
         private bool hasScoped;
     }
 }

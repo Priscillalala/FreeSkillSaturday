@@ -226,7 +226,6 @@ namespace FreeItemFriday.Skills
                 {
                     SetHooks();
                 }
-
                 return null;
             }
 
@@ -242,6 +241,12 @@ namespace FreeItemFriday.Skills
             {
                 Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
                 On.RoR2.CrocoDamageTypeController.GetDamageType += CrocoDamageTypeController_GetDamageType;
+            }
+
+            public static void UnsetHooks()
+            {
+                Events.GlobalEventManager.onHitEnemyAcceptedServer -= GlobalEventManager_onHitEnemyAcceptedServer;
+                On.RoR2.CrocoDamageTypeController.GetDamageType -= CrocoDamageTypeController_GetDamageType;
             }
 
             private static void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
@@ -263,12 +268,6 @@ namespace FreeItemFriday.Skills
                     return Unused;
                 }
                 return orig(self);
-            }
-
-            public static void UnsetHooks()
-            {
-                Events.GlobalEventManager.onHitEnemyAcceptedServer -= GlobalEventManager_onHitEnemyAcceptedServer;
-                On.RoR2.CrocoDamageTypeController.GetDamageType -= CrocoDamageTypeController_GetDamageType;
             }
         }
     }

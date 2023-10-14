@@ -55,7 +55,9 @@ namespace FreeItemFriday.Skills
                 .SetRequiredStock(0)
                 .SetStockToConsume(0)
                 .SetKeywordTokens("KEYWORD_SHOCKING");
-            (Content.Skills.RailgunnerElectricGrenade as RailgunSkillDef).offlineIcon = (await _railgunnerBodyFirePistol).offlineIcon;
+
+            RailgunSkillDef railgunnerBodyFirePistol = await _railgunnerBodyFirePistol;
+            (Content.Skills.RailgunnerElectricGrenade as RailgunSkillDef).offlineIcon = railgunnerBodyFirePistol.offlineIcon;
 
             Content.Achievements.RailgunnerHipster = Expansion.DefineAchievementForSkill("RailgunnerHipster", Content.Skills.RailgunnerElectricGrenade)
                 .SetIconSprite(Content.Skills.RailgunnerElectricGrenade.icon)

@@ -4,6 +4,7 @@ using UnityEngine;
 using Ivyl;
 using static FreeItemFriday.Content.Items;
 using static FreeItemFriday.Content.Equipment;
+using static FreeItemFriday.Content.Elites;
 using static FreeItemFriday.Content.Artifacts;
 using static FreeItemFriday.Content.Skills;
 using static FreeItemFriday.Content.Achievements;
@@ -37,6 +38,12 @@ namespace FreeItemFriday.Language
             { DeathEyeConsumed?.descriptionToken, $"Still shocking to the touch. Does nothing." },
             #endregion
 
+            #region elites
+            { Magnetic?.GetModifierToken(), "Magnetic {0}" },
+            { Water?.GetModifierToken(), "Tidal {0}" },
+            { Barrier?.GetModifierToken(), "Crystalline {0}" },
+            #endregion
+
             #region artifacts
             { SlipperyTerrain?.nameToken, $"Artifact of Entropy" },
             { SlipperyTerrain?.descriptionToken, $"Terrain is smooth and frictionless." },
@@ -51,6 +58,8 @@ namespace FreeItemFriday.Language
             { "FSS_KEYWORD_BLEED", $"<style=cKeywordName>Bleed</style><style=cSub>Deal <style=cIsDamage>320%</style> base damage over 4s. <i>Bleed can stack.</i></style>" },
             { RailgunnerElectricGrenade?.skillNameToken, $"Pulse Grenade" },
             { RailgunnerElectricGrenade?.skillDescriptionToken, $"<style=cIsDamage>Shocking</style>. Fire a grenade that explodes for <style=cIsDamage>{Skills.PulseGrenade.damageCoefficient:0%} damage</style>." },
+            { RailgunnerPassiveBouncingBullets?.skillNameToken, $"XQR Chip" },
+            { RailgunnerPassiveBouncingBullets?.skillDescriptionToken, $"<style=cIsDamage>Smart Chip</style> intercepts Weak Point display to highlight optimal <style=cIsDamagey>ricochet angles</style> instead." },
             #endregion
 
             #region achievements
