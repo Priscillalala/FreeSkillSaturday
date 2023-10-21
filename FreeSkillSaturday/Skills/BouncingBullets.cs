@@ -26,6 +26,8 @@ namespace FreeItemFriday.Skills
 {
     public class BouncingBullets : FreeSkillSaturday.Behavior
     {
+        public static float bounceRadius = 30f;
+
         public static GameObject SmartTargetVisualizer { get; private set; }
 
         public async void Awake()
@@ -34,14 +36,14 @@ namespace FreeItemFriday.Skills
             using Task<GameObject> _smartTargetVisualizer = CreateSmartTargetVisualizerAsync();
 
             Content.Skills.RailgunnerPassiveBouncingBullets = Expansion.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texRailgunnerElectricGrenadeIcon"));
+                .SetIconSprite(Assets.LoadAsset<Sprite>("texRailgunnerBouncingBulletsIcon"));
 
-            /*Content.Achievements.RailgunnerHipster = Expansion.DefineAchievementForSkill("RailgunnerHipster", Content.Skills.RailgunnerElectricGrenade)
-                .SetIconSprite(Content.Skills.RailgunnerElectricGrenade.icon)
-                .SetTrackerTypes(typeof(RailgunnerHipsterAchievement), null);*/
+            Content.Achievements.RailgunnerEliteSniper = Expansion.DefineAchievementForSkill("RailgunnerEliteSniper", Content.Skills.RailgunnerPassiveBouncingBullets)
+                .SetIconSprite(Content.Skills.RailgunnerPassiveBouncingBullets.icon)
+                .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
 
             SkillFamily railgunnerPassiveFamily = await _railgunnerPassiveFamily;
-            railgunnerPassiveFamily.AddSkill(Content.Skills.RailgunnerPassiveBouncingBullets, null);
+            railgunnerPassiveFamily.AddSkill(Content.Skills.RailgunnerPassiveBouncingBullets, Content.Achievements.RailgunnerEliteSniper.UnlockableDef);
 
             SmartTargetVisualizer = await _smartTargetVisualizer;
         }
@@ -169,7 +171,7 @@ namespace FreeItemFriday.Skills
                             search.filterByLoS = true;
                             search.sortMode = BullseyeSearch.SortMode.DistanceAndAngle;
                             search.filterByDistinctEntity = true;
-                            search.maxDistanceFilter = 25f;
+                            search.maxDistanceFilter = bounceRadius;
 
                             bool TryFindNextTarget(out HurtBox nextTarget)
                             {
@@ -571,71 +573,3 @@ namespace FreeItemFriday.Skills
         }
     }
 }
-//search.maxAngleFilter = 180f;
-/*search.RefreshCandidates();
-search.FilterOutGameObject(hitInfo.entityObject);
-HurtBox[] targets = search
-.GetResults()
-.Select(x => x.hurtBoxGroup?.hurtBoxes[UnityEngine.Random.Range(0, x.hurtBoxGroup.hurtBoxes.Length)])
-.Where(x => x)
-.ToArray();*/
-
-/*for (int i = 0; i < targets.Length; i++)
-{
-    HurtBox target = targets[i];
-    Vector3 currentPosition = target.randomVolumePoint;
-    distance += Vector3.Distance(prevPosition, currentPosition);
-    if (remainingBounces > 0 && i < targets.Length - 1)
-    {
-        BulletAttack.BulletHit bouncedHitInfo = new BulletAttack.BulletHit
-        {
-            direction = (currentPosition - prevPosition).normalized,
-            point = currentPosition,
-            surfaceNormal = (prevPosition - currentPosition).normalized,
-            distance = distance,
-            collider = target.collider,
-            hitHurtBox = target,
-            entityObject = target.healthComponent ? target.healthComponent.gameObject : target.gameObject,
-            damageModifier = HurtBox.DamageModifier.Normal,
-            isSniperHit = false,
-        };
-        BulletAttack.defaultHitCallback(bulletAttack, ref bouncedHitInfo);
-        if (bulletAttack.tracerEffectPrefab)
-        {
-            EffectData effectData = new EffectData
-            {
-                origin = currentPosition,
-                start = prevPosition
-            };
-            EffectManager.SpawnEffect(bulletAttack.tracerEffectPrefab, effectData, true);
-        }
-        if (--remainingBounces <= 0)
-        {
-            break;
-        }
-    }
-    else
-    {
-        GameObject previousTargetObject = hitInfo.entityObject;
-        if (i > 0)
-        {
-            HurtBox previousTarget = targets[i - 1];
-            previousTargetObject = previousTarget.healthComponent ? previousTarget.healthComponent.gameObject : previousTarget.gameObject;
-        }
-        BulletAttackParams bulletAttackParams = new BulletAttackParams(bulletAttack);
-        bulletAttack.aimVector = currentPosition - prevPosition;
-        bulletAttack.origin = prevPosition;
-        bulletAttack.weapon = previousTargetObject;
-        bulletAttack.bulletCount = 1;
-        bulletAttack.hitCallback = BulletAttack.defaultHitCallback;
-        try
-        {
-            bulletAttack.Fire();
-        }
-        finally
-        {
-            bulletAttackParams.Apply(bulletAttack);
-        }
-    }
-    prevPosition = currentPosition;
-}*/

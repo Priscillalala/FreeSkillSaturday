@@ -59,7 +59,7 @@ namespace FreeItemFriday.Language
             { RailgunnerElectricGrenade?.skillNameToken, $"Pulse Grenade" },
             { RailgunnerElectricGrenade?.skillDescriptionToken, $"<style=cIsDamage>Shocking</style>. Fire a grenade that explodes for <style=cIsDamage>{Skills.PulseGrenade.damageCoefficient:0%} damage</style>." },
             { RailgunnerPassiveBouncingBullets?.skillNameToken, $"XQR Chip" },
-            { RailgunnerPassiveBouncingBullets?.skillDescriptionToken, $"<style=cIsDamage>Smart Chip</style> intercepts Weak Point display to highlight optimal <style=cIsDamagey>ricochet angles</style> instead." },
+            { RailgunnerPassiveBouncingBullets?.skillDescriptionToken, $"<style=cIsDamage>Smart Chip</style> intercepts Weak Point display to highlight optimal <style=cIsDamage>ricochet angles</style> instead." },
             #endregion
 
             #region achievements
@@ -77,6 +77,8 @@ namespace FreeItemFriday.Language
             { RailgunnerTravelDistance?.GetDescriptionToken(), "As Railgunner, travel 10 miles in a single run." },
             { RailgunnerHipster?.GetNameToken(), "Railgunner: Hipster" },
             { RailgunnerHipster?.GetDescriptionToken(), "As Railgunner, complete the Primordial Teleporter event without scoping in." },
+            { RailgunnerEliteSniper?.GetNameToken(), "Railgunner: Supercharged" },
+            { RailgunnerEliteSniper?.GetDescriptionToken(), "As Railgunner, beat the game on Eclipse while carrying a Fuel Array." },
             #endregion
         };
     }
