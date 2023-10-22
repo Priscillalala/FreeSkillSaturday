@@ -24,7 +24,7 @@ using EntityStates.Railgunner.Scope;
 
 namespace FreeItemFriday.Skills
 {
-    public class BouncingBullets : FreeSkillSaturday.Behavior
+    public class XQRChip : FreeSkillSaturday.Behavior
     {
         public static float bounceRadius = 30f;
 

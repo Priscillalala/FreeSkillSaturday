@@ -12,6 +12,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="EntityStates\RepairSelf.cs" />
+	  <Compile Remove="ScrapUtil.cs" />
+	  <Compile Remove="Skills\FieldRepairs.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <None Include="..\.editorconfig" Link=".editorconfig" />
 	</ItemGroup>
 

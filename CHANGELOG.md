@@ -1,3 +1,7 @@
+## 1.5.0
+* New Alternate Skill: XQR Chip
+* Fixed the Railgunner: Hipster achievement not triggering for clients
+
 ## 1.4.0
 * New Alternate Skill: Pulse Grenade
 * Removed PrefabAPI dependency
