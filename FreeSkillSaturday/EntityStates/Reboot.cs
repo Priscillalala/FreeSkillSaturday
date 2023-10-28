@@ -27,6 +27,7 @@ namespace EntityStates.Toolbot
         private OverlayController overlayController;
         private List<ImageFillController> fillUiList = new List<ImageFillController>();
         private Run.FixedTimeStamp startTime;
+        private bool didChangeMusic;
         private bool didPauseAnimations;
         private bool didRestoreAnimations;
         private bool didCleanseBody;
@@ -72,9 +73,12 @@ namespace EntityStates.Toolbot
             Util.PlaySound("Play_engi_R_turret_death", gameObject);
             Util.PlaySound("Play_env_hiddenLab_laptop_active_loop", gameObject);
             On.RoR2.PostProcessing.ScreenDamage.OnRenderImage += ScreenDamage_OnRenderImage;
-            AkSoundEngine.SetRTPCValue(AudioManager.cvVolumeMsx.rtpcName, 0f);
-            On.RoR2.AudioManager.VolumeConVar.SetString += VolumeConVar_SetString;
-            On.RoR2.AudioManager.VolumeConVar.GetString += VolumeConVar_GetString;
+            if (didChangeMusic = LocalUserManager.readOnlyLocalUsersList.Any(x => x.cachedBodyObject == gameObject))
+            {
+                AkSoundEngine.SetRTPCValue(AudioManager.cvVolumeMsx.rtpcName, 0f);
+                On.RoR2.AudioManager.VolumeConVar.SetString += VolumeConVar_SetString;
+                On.RoR2.AudioManager.VolumeConVar.GetString += VolumeConVar_GetString;
+            }
         }
 
         public override void FixedUpdate()
@@ -139,9 +143,12 @@ namespace EntityStates.Toolbot
             Util.PlaySound("Play_captain_R_aim", gameObject);
             Util.PlaySound("Play_captain_R_turret_build", gameObject);
             On.RoR2.PostProcessing.ScreenDamage.OnRenderImage -= ScreenDamage_OnRenderImage;
-            On.RoR2.AudioManager.VolumeConVar.SetString -= VolumeConVar_SetString;
-            On.RoR2.AudioManager.VolumeConVar.GetString -= VolumeConVar_GetString;
-            AudioManager.cvVolumeMsx.SetString(AudioManager.cvVolumeMsx.fallbackString);
+            if (didChangeMusic)
+            {
+                On.RoR2.AudioManager.VolumeConVar.SetString -= VolumeConVar_SetString;
+                On.RoR2.AudioManager.VolumeConVar.GetString -= VolumeConVar_GetString;
+                AudioManager.cvVolumeMsx.SetString(AudioManager.cvVolumeMsx.fallbackString);
+            }
             base.OnExit();
         }
 
@@ -184,6 +191,17 @@ namespace EntityStates.Toolbot
                     if (skill != skillLocator.utility)
                     {
                         skill.Reset();
+                    }
+                }
+            }
+            if (NetworkServer.active && characterBody.inventory)
+            {
+                for (uint i = 0; i < characterBody.inventory.GetEquipmentSlotCount(); i++)
+                {
+                    EquipmentState equipmentState = characterBody.inventory.GetEquipment(i);
+                    if (equipmentState.equipmentIndex != EquipmentIndex.None && equipmentState.charges <= 0)
+                    {
+                        characterBody.inventory.SetEquipment(new EquipmentState(equipmentState.equipmentIndex, Run.FixedTimeStamp.now, equipmentState.charges), i);
                     }
                 }
             }

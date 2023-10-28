@@ -16,7 +16,7 @@ using R2API;
 
 namespace FreeItemFriday
 {
-    [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.6.0")]
+    [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.6.1")]
     [BepInConfig("FreeItemFriday", BepInConfig.ComponentGroupingFlags.ByComponent | BepInConfig.ComponentGroupingFlags.ByNamespace)]
     [BepInDependency(RecalculateStatsAPI.PluginGUID)]
     [BepInDependency(ColorsAPI.PluginGUID)]

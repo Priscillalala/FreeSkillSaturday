@@ -1,10 +1,14 @@
+## 1.6.1
+* Reboot resets equipment cooldowns
+* Fix reboot affecting the music of all players in a lobby
+
 ## 1.6.0
 * New Alternate Skill: Reboot
 * Moved image file host from discord to github in preparation for creating a wiki
 
 ## 1.5.0
 * New Alternate Skill: XQR Chip
-* Fixed the Railgunner: Hipster achievement not triggering for clients
+* Fix the Railgunner: Hipster achievement not triggering for clients
 
 ## 1.4.0
 * New Alternate Skill: Pulse Grenade
