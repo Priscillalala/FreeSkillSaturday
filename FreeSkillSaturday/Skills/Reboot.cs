@@ -42,12 +42,13 @@ namespace FreeItemFriday.Skills
                 .SetInterruptPriority(EntityStates.InterruptPriority.Skill)
                 .SetFlags(SkillFlags.MustKeyPress | SkillFlags.BeginSkillCooldownOnSkillEnd | SkillFlags.NonCombat | SkillFlags.NoRestockOnAssign | SkillFlags.Agile);
 
-            /*Content.Achievements.RailgunnerEliteSniper = Expansion.DefineAchievementForSkill("RailgunnerEliteSniper", Content.Skills.RailgunnerPassiveBouncingBullets)
-                .SetIconSprite(Content.Skills.RailgunnerPassiveBouncingBullets.icon)
-                .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);*/
+            Content.Achievements.ToolbotOverclocked = Expansion.DefineAchievementForSkill("ToolbotOverclocked", Content.Skills.ToolbotReboot)
+                .SetIconSprite(Content.Skills.ToolbotReboot.icon)
+                .SetPrerequisiteAchievement("RepeatFirstTeleporter")
+                .SetTrackerTypes(typeof(ToolbotOverclockedAchievement), null);
 
             SkillFamily toolbotBodyUtilityFamily = await _toolbotBodyUtilityFamily;
-            toolbotBodyUtilityFamily.AddSkill(Content.Skills.ToolbotReboot, null);
+            toolbotBodyUtilityFamily.AddSkill(Content.Skills.ToolbotReboot, Content.Achievements.ToolbotOverclocked.UnlockableDef);
 
             RebootOverlay = await _rebootOverlay;
             VentEffect = await _ventEffect;

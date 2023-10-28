@@ -81,6 +81,8 @@ namespace FreeItemFriday.Language
             { RailgunnerHipster?.GetDescriptionToken(), "As Railgunner, complete the Primordial Teleporter event without scoping in." },
             { RailgunnerEliteSniper?.GetNameToken(), "Railgunner: Supercharged" },
             { RailgunnerEliteSniper?.GetDescriptionToken(), "As Railgunner, beat the game on Eclipse while carrying a Fuel Array." },
+            { ToolbotOverclocked?.GetNameToken(), "MUL-T: Overclocked" },
+            { ToolbotOverclocked?.GetDescriptionToken(), "As MUL-T, deal damage 100 times in one second." },
             #endregion
         };
     }

@@ -61,6 +61,7 @@ namespace FreeItemFriday
             [CanBeNull] public static AchievementWrapper RailgunnerTravelDistance;
             [CanBeNull] public static AchievementWrapper RailgunnerHipster;
             [CanBeNull] public static AchievementWrapper RailgunnerEliteSniper;
+            [CanBeNull] public static AchievementWrapper ToolbotOverclocked;
         }
     }
 }
