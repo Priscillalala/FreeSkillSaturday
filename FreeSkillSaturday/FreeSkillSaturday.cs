@@ -6,6 +6,7 @@ using System.IO;
 using System.Security;
 using System.Security.Permissions;
 using UnityEngine;
+using R2API;
 
 [module: UnverifiableCode]
 #pragma warning disable
@@ -17,6 +18,10 @@ namespace FreeItemFriday
 {
     [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.5.0")]
     [BepInConfig("FreeItemFriday", BepInConfig.ComponentGroupingFlags.ByComponent | BepInConfig.ComponentGroupingFlags.ByNamespace)]
+    [BepInDependency(RecalculateStatsAPI.PluginGUID)]
+    [BepInDependency(ColorsAPI.PluginGUID)]
+    [BepInDependency(DamageAPI.PluginGUID)]
+    [BepInDependency(DotAPI.PluginGUID)]
     public class FreeSkillSaturday : BaseUnityPlugin<FreeSkillSaturday>
     {
         public AssetBundle assets;

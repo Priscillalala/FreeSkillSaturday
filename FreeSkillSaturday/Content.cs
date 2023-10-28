@@ -48,6 +48,7 @@ namespace FreeItemFriday
             [CanBeNull] public static SkillDef RailgunnerElectricGrenade;
             [CanBeNull] public static SkillDef ToolbotRepair;
             [CanBeNull] public static SkillDef RailgunnerPassiveBouncingBullets;
+            [CanBeNull] public static SkillDef ToolbotReboot;
         }
 
         public static class Achievements

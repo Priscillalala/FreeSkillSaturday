@@ -60,6 +60,8 @@ namespace FreeItemFriday.Language
             { RailgunnerElectricGrenade?.skillDescriptionToken, $"<style=cIsDamage>Shocking</style>. Fire a grenade that explodes for <style=cIsDamage>{Skills.PulseGrenade.damageCoefficient:0%} damage</style>." },
             { RailgunnerPassiveBouncingBullets?.skillNameToken, $"XQR Chip" },
             { RailgunnerPassiveBouncingBullets?.skillDescriptionToken, $"<style=cIsDamage>Smart Chip</style> intercepts Weak Point display to highlight optimal <style=cIsDamage>ricochet angles</style> instead." },
+            { ToolbotReboot?.skillNameToken, $"Reboot" },
+            { ToolbotReboot?.skillDescriptionToken, $"<style=cIsHealth>Power down</style> for <style=cIsHealth>{Skills.Reboot.duration}</style> seconds to <style=cIsUtility>cleanse all debuffs</style>, <style=cIsDamage>reset your cooldowns</style>, and <style=cIsHealing>restore missing health</style>." },
             #endregion
 
             #region achievements
