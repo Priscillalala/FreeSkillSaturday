@@ -12,9 +12,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Remove="EntityStates\RepairSelf.cs" />
+	  <Compile Remove="entitystates\RepairSelf.cs" />
 	  <Compile Remove="ScrapUtil.cs" />
-	  <Compile Remove="Skills\FieldRepairs.cs" />
+	  <Compile Remove="skills\FieldRepairs.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

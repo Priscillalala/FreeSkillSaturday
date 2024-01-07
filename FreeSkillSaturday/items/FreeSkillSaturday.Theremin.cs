@@ -1,5 +1,4 @@
-﻿using IvyLibrary;
-using RoR2.Items;
+﻿using RoR2.Items;
 
 namespace FreeItemFriday;
 
