@@ -1,7 +1,5 @@
 ﻿using RoR2.Skills;
 using HG;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
 using FreeItemFriday.Achievements;
 using RoR2.Projectile;
 using UnityEngine.UI;

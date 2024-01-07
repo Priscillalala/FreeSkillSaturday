@@ -1,19 +1,9 @@
-﻿using System;
-using Unity;
-using UnityEngine;
-using RoR2;
-using System.Collections;
-using HG;
-using RoR2.Achievements;
-using RoR2.Achievements.Artifacts;
-using System.Collections.Generic;
-using UnityEngine.Networking;
+﻿using RoR2.Achievements.Artifacts;
 
-namespace FreeItemFriday.Achievements
+namespace FreeItemFriday.Achievements;
+
+public class ObtainArtifactSlipperyTerrainAchievement : BaseObtainArtifactAchievement
 {
-    public class ObtainArtifactSlipperyTerrainAchievement : BaseObtainArtifactAchievement
-    {
-        public override ArtifactDef artifactDef => Content.Artifacts.SlipperyTerrain;
-    }
+    public override ArtifactDef artifactDef => FreeSkillSaturday.Artifacts.SlipperyTerrain;
 }
 

@@ -2,9 +2,12 @@
 global using System.Collections;
 global using System.Collections.Generic;
 global using UnityEngine;
+global using UnityEngine.Networking;
 global using UnityEngine.AddressableAssets;
 global using UnityEngine.ResourceManagement.AsyncOperations;
 global using BepInEx;
+global using MonoMod.Cil;
+global using Mono.Cecil.Cil;
 global using IvyLibrary;
 global using R2API;
 global using RoR2;

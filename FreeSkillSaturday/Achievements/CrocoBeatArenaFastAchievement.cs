@@ -1,56 +1,47 @@
-﻿using System;
-using Unity;
-using UnityEngine;
-using RoR2;
-using System.Collections;
-using HG;
-using RoR2.Achievements;
-using System.Collections.Generic;
-using UnityEngine.Networking;
+﻿using RoR2.Achievements;
 
-namespace FreeItemFriday.Achievements
+namespace FreeItemFriday.Achievements;
+
+public class CrocoBeatArenaFastAchievement : BaseAchievement
 {
-    public class CrocoBeatArenaFastAchievement : BaseAchievement
+    public override BodyIndex LookUpRequiredBodyIndex() => BodyCatalog.FindBodyIndex("CrocoBody");
+
+    public override void OnBodyRequirementMet()
     {
-        public override BodyIndex LookUpRequiredBodyIndex() => BodyCatalog.FindBodyIndex("CrocoBody");
+        base.OnBodyRequirementMet();
+        SetServerTracked(true);
+    }
 
-        public override void OnBodyRequirementMet()
+    public override void OnBodyRequirementBroken()
+    {
+        SetServerTracked(false);
+        base.OnBodyRequirementBroken();
+    }
+
+    public class ServerAchievement : BaseServerAchievement
+    {
+        public override void OnInstall()
         {
-            base.OnBodyRequirementMet();
-            SetServerTracked(true);
+            base.OnInstall();
+            ArenaMissionController.onBeatArena += ArenaMissionController_onBeatArena;
         }
 
-        public override void OnBodyRequirementBroken()
+        public override void OnUninstall()
         {
-            SetServerTracked(false);
-            base.OnBodyRequirementBroken();
+            ArenaMissionController.onBeatArena -= ArenaMissionController_onBeatArena;
+            base.OnUninstall();
         }
 
-        public class ServerAchievement : BaseServerAchievement
+        private void ArenaMissionController_onBeatArena()
         {
-            public override void OnInstall()
+            if (!Run.instance || Run.instance.ambientLevel >= 10f)
             {
-                base.OnInstall();
-                ArenaMissionController.onBeatArena += ArenaMissionController_onBeatArena;
+                return;
             }
-
-            public override void OnUninstall()
+            DifficultyDef difficultyDef = DifficultyCatalog.GetDifficultyDef(Run.instance.selectedDifficulty);
+            if (difficultyDef != null && difficultyDef.countsAsHardMode)
             {
-                ArenaMissionController.onBeatArena -= ArenaMissionController_onBeatArena;
-                base.OnUninstall();
-            }
-
-            private void ArenaMissionController_onBeatArena()
-            {
-                if (!Run.instance || Run.instance.ambientLevel >= 10f)
-                {
-                    return;
-                }
-                DifficultyDef difficultyDef = DifficultyCatalog.GetDifficultyDef(Run.instance.selectedDifficulty);
-                if (difficultyDef != null && difficultyDef.countsAsHardMode)
-                {
-                    Grant();
-                }
+                Grant();
             }
         }
     }
