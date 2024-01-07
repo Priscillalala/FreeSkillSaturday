@@ -2,7 +2,6 @@
 using FreeItemFriday.Achievements;
 using EntityStates;
 
-
 namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
