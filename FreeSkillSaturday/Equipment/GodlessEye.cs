@@ -1,53 +1,48 @@
-﻿using System;
-using Unity;
-using UnityEngine;
-using RoR2;
-using RoR2.Items;
-using R2API;
-using System.Collections;
-using UnityEngine.Networking;
-using System.Collections.Generic;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using FreeItemFriday.Achievements;
-using Ivyl;
-using System.Threading.Tasks;
+﻿using FreeItemFriday.Achievements;
 
-namespace FreeItemFriday.Equipment
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class GodlessEye : FreeSkillSaturday.Behavior
+    public class GodlessEye : MonoBehaviour
     {
         public static float range = 200f;
         public static float duration = 2f;
         public static int maxConsecutiveEnemies = 10;
 
-        public GameObject delayedDeathHandler;
+        public static GameObject DelayedDeathHandler { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2AssetGroup<ItemDisplayRuleSet> _idrs = RoR2AssetGroups.ItemDisplayRuleSets;
-            using RoR2Asset<Material> _matMSObeliskLightning = "RoR2/Base/mysteryspace/matMSObeliskLightning.mat";
-            using RoR2Asset<Material> _matMSObeliskHeart = "RoR2/Base/mysteryspace/matMSObeliskHeart.mat";
-            using RoR2Asset<Material> _matMSStarsLink = "RoR2/Base/mysteryspace/matMSStarsLink.mat";
-            using RoR2Asset<Material> _matJellyfishLightning = "RoR2/Base/Common/VFX/matJellyfishLightning.mat";
-            using Task<GameObject> _delayedDeathHandler = CreateDelayedDeathHandlerAsync();
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
 
-            GameObject pickupModelPrefab = Assets.LoadAsset<GameObject>("PickupDeathEye");
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat", out var matMSObeliskLightning);
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat", out var matMSObeliskHeart);
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat", out var matMSStarsLink);
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat", out var matJellyfishLightning);
+
+            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupDeathEye", out var PickupDeathEye);
+            GameObject pickupModelPrefab = PickupDeathEye.asset;
 
             MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
             Material[] sharedMaterials = modelRenderer.sharedMaterials;
-            sharedMaterials[1] = await _matMSObeliskLightning;
+            sharedMaterials[1] = matMSObeliskLightning.Result;
             modelRenderer.sharedMaterials = sharedMaterials;
 
-            GameObject consumedPickupModelPrefab = Prefabs.ClonePrefab(pickupModelPrefab, "PickupDeathEyeConsumed");
+            GameObject consumedPickupModelPrefab = Ivyl.ClonePrefab(pickupModelPrefab, "PickupDeathEyeConsumed");
             DestroyImmediate(consumedPickupModelPrefab.transform.Find("EyeBallFX").gameObject);
 
-            pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = await _matMSObeliskHeart;
-            pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = await _matMSStarsLink;
-            pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = await _matJellyfishLightning;
+            pickupModelPrefab.transform.Find("EyeBallFX/Weird Sphere").GetComponent<ParticleSystemRenderer>().sharedMaterial = matMSObeliskHeart.Result;
+            pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = matMSStarsLink.Result;
+            pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = matJellyfishLightning.Result;
 
-            Content.Equipment.DeathEye = Expansion.DefineEquipment("DeathEye")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texDeathEyeIcon"))
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeIcon", out var texDeathEyeIcon);
+
+            Equipment.DeathEye = Instance.Content.DefineEquipment("DeathEye")
+                .SetIconSprite(texDeathEyeIcon.asset)
                 .SetEquipmentType(EquipmentType.Lunar)
                 .SetCooldown(60f)
                 .SetAvailability(EquipmentAvailability.MultiplayerExclusive)
@@ -55,21 +50,25 @@ namespace FreeItemFriday.Equipment
                 .SetPickupModelPrefab(pickupModelPrefab, new ModelPanelParams(Vector3.zero, 3, 10))
                 .SetActivationFunction(FireDeathEye);
 
-            Content.Equipment.DeathEyeConsumed = Expansion.DefineEquipment("DeathEyeConsumed")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texDeathEyeConsumedIcon"))
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeConsumedIcon", out var texDeathEyeConsumedIcon);
+
+            Equipment.DeathEyeConsumed = Instance.Content.DefineEquipment("DeathEyeConsumed")
+                .SetIconSprite(texDeathEyeConsumedIcon.asset)
                 .SetEquipmentType(EquipmentType.Lunar)
                 .SetAvailability(EquipmentAvailability.Never)
                 .SetFlags(EquipmentFlags.NeverRandomlyTriggered | EquipmentFlags.EnigmaIncompatible)
                 .SetPickupModelPrefab(consumedPickupModelPrefab);
-            Content.Equipment.DeathEyeConsumed.colorIndex = ColorCatalog.ColorIndex.Unaffordable;
+            Equipment.DeathEyeConsumed.colorIndex = ColorCatalog.ColorIndex.Unaffordable;
 
-            Content.Achievements.CompleteMultiplayerUnknownEnding = Expansion.DefineAchievementForEquipment("CompleteMultiplayerUnknownEnding", Content.Equipment.DeathEye)
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texCompleteMultiplayerUnknownEndingIcon"))
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCompleteMultiplayerUnknownEndingIcon", out var texCompleteMultiplayerUnknownEndingIcon);
+
+            Achievements.CompleteMultiplayerUnknownEnding = Instance.Content.DefineAchievementForEquipment("CompleteMultiplayerUnknownEnding", Equipment.DeathEye)
+                .SetIconSprite(texCompleteMultiplayerUnknownEndingIcon.asset)
                 .SetTrackerTypes(typeof(CompleteMultiplayerUnknownEndingAchievement), typeof(CompleteMultiplayerUnknownEndingAchievement.ServerAchievement));
             // Match achievement identifiers from FreeItemFriday
-            Content.Achievements.CompleteMultiplayerUnknownEnding.AchievementDef.identifier = "CompleteMultiplayerUnknownEnding";
+            Achievements.CompleteMultiplayerUnknownEnding.AchievementDef.identifier = "CompleteMultiplayerUnknownEnding";
 
-            GameObject displayModelPrefab = Prefabs.CreatePrefab("DisplayDeathEye");
+            GameObject displayModelPrefab = Ivyl.CreatePrefab("DisplayDeathEye");
             displayModelPrefab.AddComponent<ItemDisplay>();
             ItemFollower itemFollower = displayModelPrefab.AddComponent<ItemFollower>();
             itemFollower.targetObject = displayModelPrefab;
@@ -77,49 +76,48 @@ namespace FreeItemFriday.Equipment
             itemFollower.distanceDampTime = 0.005f;
             itemFollower.distanceMaxSpeed = 200f;
 
-            GameObject consumedDisplayModelPrefab = Prefabs.ClonePrefab(displayModelPrefab, "DisplayDeathEyeConsumed");
+            GameObject consumedDisplayModelPrefab = Ivyl.ClonePrefab(displayModelPrefab, "DisplayDeathEyeConsumed");
             ItemFollower consumedItemFollower = consumedDisplayModelPrefab.GetComponent<ItemFollower>();
             consumedItemFollower.targetObject = consumedDisplayModelPrefab;
             consumedItemFollower.followerPrefab = consumedPickupModelPrefab;
 
-            ItemDisplaySpec[] itemDisplays = new[]
+            static void AddDisplayRules(ItemDisplaySpec itemDisplay)
             {
-                new ItemDisplaySpec(Content.Equipment.DeathEye, displayModelPrefab),
-                new ItemDisplaySpec(Content.Equipment.DeathEyeConsumed, consumedDisplayModelPrefab),
-            };
+                var idrs = Instance.itemDisplayRuleSets;
+                idrs["idrsCommando"].AddDisplayRule(itemDisplay, "Head", new Vector3(0.001F, 0.545F, -0.061F), new Vector3(0F, 90F, 0F), new Vector3(0.069F, 0.069F, 0.069F));
+                idrs["idrsHuntress"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 0.486F, -0.158F), new Vector3(359.97F, 89.949F, 345.155F), new Vector3(0.067F, 0.067F, 0.067F));
+                idrs["idrsBandit2"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.001F, 0.367F, -0.002F), new Vector3(0F, 89.995F, 0.001F), new Vector3(0.066F, 0.066F, 0.066F));
+                idrs["idrsToolbot"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 4.049F, 3.237F), new Vector3(0.708F, 89.264F, 50.748F), new Vector3(0.111F, 0.111F, 0.111F));
+                idrs["idrsEngi"].AddDisplayRule(itemDisplay, "Chest", new Vector3(-0.001F, 1.049F, 0.174F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
+                idrs["idrsMage"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 0.328F, 0.003F), new Vector3(0F, 90F, 0F), new Vector3(0.055F, 0.055F, 0.055F));
+                idrs["idrsMerc"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 0.452F, -0.01F), new Vector3(0F, 90F, 0F), new Vector3(0.06F, 0.06F, 0.06F));
+                idrs["idrsTreebot"].AddDisplayRule(itemDisplay, "Chest", new Vector3(0.157F, 3.44F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.148F, 0.148F, 0.148F));
+                idrs["idrsLoader"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 0.442F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
+                idrs["idrsCroco"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.036F, -0.134F, 3.731F), new Vector3(0.141F, 89.889F, 298.828F), new Vector3(0.152F, 0.152F, 0.152F));
+                idrs["idrsCaptain"].AddDisplayRule(itemDisplay, "Base", new Vector3(-0.03F, 0.199F, -1.281F), new Vector3(0F, 90F, 90F), new Vector3(0.062F, 0.062F, 0.062F));
+                idrs["idrsRailGunner"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.001F, 0.363F, -0.089F), new Vector3(0F, 90F, 0F), new Vector3(0.056F, 0.056F, 0.056F));
+                idrs["idrsVoidSurvivor"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.006F, 0.322F, -0.217F), new Vector3(357.745F, 91.815F, 321.156F), new Vector3(0.069F, 0.069F, 0.069F));
+                idrs["idrsEquipmentDrone"].AddDisplayRule(itemDisplay, "HeadCenter", new Vector3(0F, 0F, 1.987F), new Vector3(0F, 90F, 90F), new Vector3(0.351F, 0.351F, 0.351F));
+            }
 
-            var idrs = await _idrs;
-            idrs["idrsCommando"].AddDisplayRule(itemDisplays, "Head", new Vector3(0.001F, 0.545F, -0.061F), new Vector3(0F, 90F, 0F), new Vector3(0.069F, 0.069F, 0.069F));
-            idrs["idrsHuntress"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.486F, -0.158F), new Vector3(359.97F, 89.949F, 345.155F), new Vector3(0.067F, 0.067F, 0.067F));
-            idrs["idrsBandit2"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.367F, -0.002F), new Vector3(0F, 89.995F, 0.001F), new Vector3(0.066F, 0.066F, 0.066F));
-            idrs["idrsToolbot"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 4.049F, 3.237F), new Vector3(0.708F, 89.264F, 50.748F), new Vector3(0.111F, 0.111F, 0.111F));
-            idrs["idrsEngi"].AddDisplayRule(itemDisplays, "Chest", new Vector3(-0.001F, 1.049F, 0.174F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
-            idrs["idrsMage"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.328F, 0.003F), new Vector3(0F, 90F, 0F), new Vector3(0.055F, 0.055F, 0.055F));
-            idrs["idrsMerc"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.452F, -0.01F), new Vector3(0F, 90F, 0F), new Vector3(0.06F, 0.06F, 0.06F));
-            idrs["idrsTreebot"].AddDisplayRule(itemDisplays, "Chest", new Vector3(0.157F, 3.44F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.148F, 0.148F, 0.148F));
-            idrs["idrsLoader"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.002F, 0.442F, 0F), new Vector3(0F, 90F, 0F), new Vector3(0.089F, 0.089F, 0.089F));
-            idrs["idrsCroco"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.036F, -0.134F, 3.731F), new Vector3(0.141F, 89.889F, 298.828F), new Vector3(0.152F, 0.152F, 0.152F));
-            idrs["idrsCaptain"].AddDisplayRule(itemDisplays, "Base", new Vector3(-0.03F, 0.199F, -1.281F), new Vector3(0F, 90F, 90F), new Vector3(0.062F, 0.062F, 0.062F));
-            idrs["idrsRailGunner"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.001F, 0.363F, -0.089F), new Vector3(0F, 90F, 0F), new Vector3(0.056F, 0.056F, 0.056F));
-            idrs["idrsVoidSurvivor"].AddDisplayRule(itemDisplays, "Head", new Vector3(-0.006F, 0.322F, -0.217F), new Vector3(357.745F, 91.815F, 321.156F), new Vector3(0.069F, 0.069F, 0.069F));
-            idrs["idrsEquipmentDrone"].AddDisplayRule(itemDisplays, "HeadCenter", new Vector3(0F, 0F, 1.987F), new Vector3(0F, 90F, 90F), new Vector3(0.351F, 0.351F, 0.351F));
+            AddDisplayRules(new ItemDisplaySpec(Equipment.DeathEye, displayModelPrefab));
+            AddDisplayRules(new ItemDisplaySpec(Equipment.DeathEyeConsumed, consumedDisplayModelPrefab));
 
-            delayedDeathHandler = await _delayedDeathHandler;
+            yield return CreateDelayedDeathHandlerAsync();
         }
 
-        public static async Task<GameObject> CreateDelayedDeathHandlerAsync()
+        public IEnumerator CreateDelayedDeathHandlerAsync()
         {
-            using RoR2Asset<GameObject> _MSObelisk = "RoR2/Base/mysteryspace/MSObelisk.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab", out var MSObelisk);
 
-            GameObject delayedDeathHandler = Prefabs.ClonePrefab((await _MSObelisk).transform.Find("Stage1FX").gameObject, "DelayedDeathHandler");
-            delayedDeathHandler.SetActive(true);
-            delayedDeathHandler.AddComponent<NetworkIdentity>();
-            delayedDeathHandler.AddComponent<DelayedDeathEye>();
-            delayedDeathHandler.AddComponent<DestroyOnTimer>().duration = duration;
-            DestroyImmediate(delayedDeathHandler.transform.Find("LongLifeNoiseTrails, Bright").gameObject);
-            DestroyImmediate(delayedDeathHandler.transform.Find("PersistentLight").gameObject);
-            Expansion.NetworkedObjectPrefabs.Add(delayedDeathHandler);
-            return delayedDeathHandler;
+            DelayedDeathHandler = Ivyl.ClonePrefab(MSObelisk.Result.transform.Find("Stage1FX").gameObject, "DelayedDeathHandler");
+            DelayedDeathHandler.SetActive(true);
+            DelayedDeathHandler.AddComponent<NetworkIdentity>();
+            DelayedDeathHandler.AddComponent<DelayedDeathEye>();
+            DelayedDeathHandler.AddComponent<DestroyOnTimer>().duration = duration;
+            DestroyImmediate(DelayedDeathHandler.transform.Find("LongLifeNoiseTrails, Bright").gameObject);
+            DestroyImmediate(DelayedDeathHandler.transform.Find("PersistentLight").gameObject);
+            Instance.Content.networkedObjectPrefabs.Add(DelayedDeathHandler);
         }
 
         public bool FireDeathEye(EquipmentSlot equipmentSlot)
@@ -129,7 +127,7 @@ namespace FreeItemFriday.Equipment
                 return false;
             }
             Vector3 position = equipmentSlot.characterBody?.corePosition ?? equipmentSlot.transform.position;
-            DelayedDeathEye delayedDeathEye = Instantiate(delayedDeathHandler, position, Quaternion.identity).GetComponent<DelayedDeathEye>();
+            DelayedDeathEye delayedDeathEye = Instantiate(DelayedDeathHandler, position, Quaternion.identity).GetComponent<DelayedDeathEye>();
 
             TeamMask teamMask = TeamMask.allButNeutral;
             if (equipmentSlot.teamComponent) 
@@ -189,8 +187,8 @@ namespace FreeItemFriday.Equipment
 
             if (equipmentSlot.characterBody?.inventory)
             {
-                CharacterMasterNotificationQueue.SendTransformNotification(equipmentSlot.characterBody.master, equipmentSlot.characterBody.inventory.currentEquipmentIndex, Content.Equipment.DeathEyeConsumed.equipmentIndex, CharacterMasterNotificationQueue.TransformationType.Default);
-                equipmentSlot.characterBody.inventory.SetEquipmentIndex(Content.Equipment.DeathEyeConsumed.equipmentIndex);
+                CharacterMasterNotificationQueue.SendTransformNotification(equipmentSlot.characterBody.master, equipmentSlot.characterBody.inventory.currentEquipmentIndex, Equipment.DeathEyeConsumed.equipmentIndex, CharacterMasterNotificationQueue.TransformationType.Default);
+                equipmentSlot.characterBody.inventory.SetEquipmentIndex(Equipment.DeathEyeConsumed.equipmentIndex);
             }
             return true;
         }
@@ -206,7 +204,7 @@ namespace FreeItemFriday.Equipment
             public Queue<DeathGroup> deathQueue = new Queue<DeathGroup>();
             public TeamMask cleanupTeams = TeamMask.none;
             private bool hasRunCleanup;
-            private RoR2Asset<GameObject> destroyEffectPrefab;
+            private GameObject destroyEffectPrefab;
 
             public void EnqueueDeath(DeathGroup death)
             {
@@ -215,7 +213,7 @@ namespace FreeItemFriday.Equipment
 
             public void Awake()
             {
-                destroyEffectPrefab = "RoR2/Base/Common/VFX/BrittleDeath.prefab";
+                destroyEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/BrittleDeath.prefab").WaitForCompletion();
             }
 
             public void Start()
@@ -279,7 +277,7 @@ namespace FreeItemFriday.Equipment
                     }
                     victim.master.preventGameOver = false;
                 }
-                EffectManager.SpawnEffect(destroyEffectPrefab.Value, new EffectData
+                EffectManager.SpawnEffect(destroyEffectPrefab, new EffectData
                 {
                     origin = victim.corePosition,
                     scale = victim.radius

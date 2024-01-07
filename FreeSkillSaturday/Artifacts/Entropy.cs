@@ -1,98 +1,95 @@
-﻿using System;
-using Unity;
-using UnityEngine;
-using RoR2;
-using RoR2.Items;
-using R2API;
-using System.Collections;
-using HG;
-using RoR2.Achievements;
-using System.Collections.Generic;
-using UnityEngine.Networking;
-using FreeItemFriday.Achievements;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
+﻿using FreeItemFriday.Achievements;
 using KinematicCharacterController;
 using UnityEngine.SceneManagement;
 using RoR2.Projectile;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using Ivyl;
 using ThreeEyedGames;
-using System.Threading.Tasks;
 
-namespace FreeItemFriday.Artifacts
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class Entropy : FreeSkillSaturday.Behavior
+    public class Entropy : MonoBehaviour
     {
         public static float baseAccelerationMultiplier = 0.05f;
         public static float airAccelerationCoefficient = 2f;
         public static float positiveAccelerationCoefficient = 10f;
         public static float horizontalJumpBoostCoefficient = 0.5f;
 
-        public PhysicMaterial physmatSlidingProjectile = Assets.LoadAsset<PhysicMaterial>("physmatSlidingProjectile");
-        public GameObject slipperyTerrainFormulaDisplay;
+        public static PhysicMaterial SlidingProjectile { get; private set; }
+        public static GameObject SlipperyTerrainFormulaDisplay { get; private set; }
 
-        public Dictionary<Material, Material> SlipperyMaterialInstances { get; private set; }
-        public bool DidUpdateSceneVisuals { get; private set; }
+        public Dictionary<Material, Material> slipperyMaterialInstances;
+        public bool didUpdateSceneVisuals;
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<Material> _matArtifact = "RoR2/Base/artifactworld/matArtifact.mat";
-            using RoR2Asset<GameObject> _engiBubbleShield = "RoR2/Base/Engi/EngiBubbleShield.prefab";
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
 
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
             ArtifactCode artifactCode = new ArtifactCode(
                 (ArtifactCompound.Circle, ArtifactCompound.Circle, ArtifactCompound.Circle),
                 (ArtifactCompound.Square, ArtifactCompound.Square, ArtifactCompound.Square),
                 (ArtifactCompound.Triangle, ArtifactCompound.Diamond, ArtifactCompound.Triangle));
 
-            using Task<GameObject> _slipperyTerrainFormulaDisplay = CreateSlipperyTerrainFormulaDisplayAsync(artifactCode);
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainEnabled", out var texArtifactSlipperyTerrainEnabled);
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainDisabled", out var texArtifactSlipperyTerrainDisabled);
+            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupSlipperyTerrain", out var PickupSlipperyTerrain);
 
-            Content.Artifacts.SlipperyTerrain = Expansion.DefineArtifact("SlipperyTerrain")
-                .SetIconSprites(Assets.LoadAsset<Sprite>("texArtifactSlipperyTerrainEnabled"), Assets.LoadAsset<Sprite>("texArtifactSlipperyTerrainDisabled"))
-                .SetPickupModelPrefab(Assets.LoadAsset<GameObject>("PickupSlipperyTerrain"))
+            Artifacts.SlipperyTerrain = Instance.Content.DefineArtifact("SlipperyTerrain")
+                .SetIconSprites(texArtifactSlipperyTerrainEnabled.asset, texArtifactSlipperyTerrainDisabled.asset)
+                .SetPickupModelPrefab(PickupSlipperyTerrain.asset)
                 .SetArtifactCode(artifactCode)
                 .SetEnabledActions(OnArtifactEnabled, OnArtifactDisabled);
 
-            Content.Achievements.ObtainArtifactSlipperyTerrain = Expansion.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Content.Artifacts.SlipperyTerrain)
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texObtainArtifactSlipperyTerrainIcon"))
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texObtainArtifactSlipperyTerrainIcon", out var texObtainArtifactSlipperyTerrainIcon);
+
+            Achievements.ObtainArtifactSlipperyTerrain = Instance.Content.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Artifacts.SlipperyTerrain)
+                .SetIconSprite(texObtainArtifactSlipperyTerrainIcon.asset)
                 .SetTrackerTypes(typeof(ObtainArtifactSlipperyTerrainAchievement));
             // Match achievement identifiers from FreeItemFriday
-            Content.Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
+            Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
 
-            if (Content.Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
+            if (Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
             {
-                renderer.sharedMaterial = await _matArtifact;
+                yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat", out var matArtifact);
+
+                renderer.sharedMaterial = matArtifact.Result;
             }
 
-            GameObject engiBubbleShield = await _engiBubbleShield;
-            if (engiBubbleShield.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab", out var EngiBubbleShield);
+
+            if (EngiBubbleShield.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
             {
                 activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
             }
 
-            slipperyTerrainFormulaDisplay = await _slipperyTerrainFormulaDisplay;
+            yield return Instance.Assets.LoadAssetAsync<PhysicMaterial>("physmatSlidingProjectile", out var physmatSlidingProjectile);
+
+            SlidingProjectile = physmatSlidingProjectile.asset;
+
+            yield return CreateSlipperyTerrainFormulaDisplayAsync(artifactCode);
         }
 
-        public static async Task<GameObject> CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
+        public IEnumerator CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
         {
-            using RoR2Asset<GameObject> _artifactFormulaDisplay = "RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var ArtifactFormulaDisplay);
 
-            GameObject slipperyTerrainFormulaDisplay = Prefabs.ClonePrefab(await _artifactFormulaDisplay, "SlipperyTerrainFormulaDisplay");
-            await artifactCode.CopyToFormulaDisplayAsync(slipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
-            foreach (Decal decal in slipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
+            SlipperyTerrainFormulaDisplay = Ivyl.ClonePrefab(ArtifactFormulaDisplay.Result, "SlipperyTerrainFormulaDisplay");
+            artifactCode.CopyToFormulaDisplayAsync(SlipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
+            foreach (Decal decal in SlipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
             {
                 decal.Fade = 0.15f;
             }
-            if (slipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
+            if (SlipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
             {
                 frame.gameObject.SetActive(false);
             }
-            if (slipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
+            if (SlipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
             {
                 mesh.gameObject.SetActive(false);
             }
-            return slipperyTerrainFormulaDisplay;
         }
         
         public void OnEnable()
@@ -107,11 +104,11 @@ namespace FreeItemFriday.Artifacts
 
         private void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)
         {
-            if (newScene.name == "snowyforest" && slipperyTerrainFormulaDisplay)
+            if (newScene.name == "snowyforest" && SlipperyTerrainFormulaDisplay)
             {
-                Instantiate(slipperyTerrainFormulaDisplay, new Vector3(150, 67, 237), Quaternion.Euler(new Vector3(276, 10, 190))).transform.localScale = Vector3.one * 12f;
+                Instantiate(SlipperyTerrainFormulaDisplay, new Vector3(150, 67, 237), Quaternion.Euler(new Vector3(276, 10, 190))).transform.localScale = Vector3.one * 12f;
             }
-            if (DidUpdateSceneVisuals = RunArtifactManager.instance && RunArtifactManager.instance.IsArtifactEnabled(Content.Artifacts.SlipperyTerrain))
+            if (didUpdateSceneVisuals = RunArtifactManager.instance && RunArtifactManager.instance.IsArtifactEnabled(Artifacts.SlipperyTerrain))
             {
                 StartCoroutine(nameof(UpdateSceneVisuals));
             }
@@ -119,22 +116,22 @@ namespace FreeItemFriday.Artifacts
         public IEnumerator UpdateSceneVisuals()
         {
             yield return new WaitForEndOfFrame();
-            if (SlipperyMaterialInstances != null)
+            if (slipperyMaterialInstances != null)
             {
-                foreach (Material materialInstance in SlipperyMaterialInstances.Values)
+                foreach (Material materialInstance in slipperyMaterialInstances.Values)
                 {
                     Destroy(materialInstance);
                 }
-                SlipperyMaterialInstances.Clear();
+                slipperyMaterialInstances.Clear();
             }
             else
             {
-                SlipperyMaterialInstances = new Dictionary<Material, Material>();
+                slipperyMaterialInstances = new Dictionary<Material, Material>();
             }
 
-            using RoR2Asset<Shader> _HGStandard = "RoR2/Base/Shaders/HGStandard.shader";
-            using RoR2Asset<Shader> _HGSnowTopped = "RoR2/Base/Shaders/HGSnowTopped.shader";
-            using RoR2Asset<Shader> _HGTriplanarTerrainBlend = "RoR2/Base/Shaders/HGTriplanarTerrainBlend.shader";
+            Shader HGStandard = Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGStandard.shader").WaitForCompletion();
+            Shader HGSnowTopped = Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGSnowTopped.shader").WaitForCompletion();
+            Shader HGTriplanarTerrainBlend = Addressables.LoadAssetAsync<Shader>("RoR2/Base/Shaders/HGTriplanarTerrainBlend.shader").WaitForCompletion();
 
             MeshRenderer[] meshRenderers = FindObjectsOfType<MeshRenderer>();
             for (int i = 0; i < meshRenderers.Length; i++)
@@ -149,15 +146,15 @@ namespace FreeItemFriday.Artifacts
                 {
                     continue;
                 }
-                if (!SlipperyMaterialInstances.TryGetValue(mat, out Material matInstance))
+                if (!slipperyMaterialInstances.TryGetValue(mat, out Material matInstance))
                 {
-                    if (mat.shader == _HGStandard.Value)
+                    if (mat.shader == HGStandard)
                     {
                         matInstance = Instantiate(mat);
                         matInstance.SetFloat("_SpecularStrength", 0.6f);
                         matInstance.SetFloat("_SpecularExponent ", 10f);
                     }
-                    else if (mat.shader == _HGSnowTopped.Value)
+                    else if (mat.shader == HGSnowTopped)
                     {
                         matInstance = Instantiate(mat);
                         if (matInstance.GetTexture("_SnowNormalTex"))
@@ -173,7 +170,7 @@ namespace FreeItemFriday.Artifacts
                             matInstance.SetFloat("_SpecularExponent", 3f);
                         }
                     }
-                    else if (mat.shader == _HGTriplanarTerrainBlend.Value)
+                    else if (mat.shader == HGTriplanarTerrainBlend)
                     {
                         matInstance = Instantiate(mat);
                         matInstance.SetFloat("_GreenChannelSpecularStrength", 0.15f);
@@ -182,7 +179,7 @@ namespace FreeItemFriday.Artifacts
                     if (matInstance)
                     {
                         matInstance.SetInt("_RampInfo", 1);
-                        SlipperyMaterialInstances.Add(mat, matInstance);
+                        slipperyMaterialInstances.Add(mat, matInstance);
                     }
                 }
                 if (matInstance)
@@ -195,7 +192,7 @@ namespace FreeItemFriday.Artifacts
 
         public void OnArtifactEnabled()
         {
-            if (!DidUpdateSceneVisuals)
+            if (!didUpdateSceneVisuals)
             {
                 StartCoroutine(nameof(UpdateSceneVisuals));
             }
@@ -220,7 +217,7 @@ namespace FreeItemFriday.Artifacts
             orig(self);
             if (self.TryGetComponent(out Collider collider))
             {
-                collider.sharedMaterial = physmatSlidingProjectile;
+                collider.sharedMaterial = SlidingProjectile;
             }
             if (self.TryGetComponent(out ProjectileSimple projectileSimple))
             {
@@ -267,7 +264,7 @@ namespace FreeItemFriday.Artifacts
                     return new Vector3(motor.velocity.x + newVelocity.x * adjustedHorizontalMultiplier, newVelocity.y, motor.velocity.z + newVelocity.z * adjustedHorizontalMultiplier);
                 });
             }
-            else Logger.LogError($"{nameof(Entropy)}.{nameof(GenericCharacterMain_ApplyJumpVelocity)} IL hook failed!");
+            else Instance.Logger.LogError($"{nameof(Entropy)}.{nameof(GenericCharacterMain_ApplyJumpVelocity)} IL hook failed!");
         }
 
         private void CharacterMotor_PreMove(ILContext il)
@@ -311,7 +308,7 @@ namespace FreeItemFriday.Artifacts
                 });
                 c.Emit(OpCodes.Stloc, locAcclerationIndex);
             }
-            else Logger.LogError($"{nameof(Entropy)}.{nameof(CharacterMotor_PreMove)} IL hook failed!");
+            else Instance.Logger.LogError($"{nameof(Entropy)}.{nameof(CharacterMotor_PreMove)} IL hook failed!");
         }
 
         public class FreezeRotationWhenArtifactEnabled : MonoBehaviour
@@ -321,7 +318,7 @@ namespace FreeItemFriday.Artifacts
             public void Start()
             {
                 rotation = transform.rotation;
-                if (!RunArtifactManager.instance || !RunArtifactManager.instance.IsArtifactEnabled(Content.Artifacts.SlipperyTerrain))
+                if (!RunArtifactManager.instance || !RunArtifactManager.instance.IsArtifactEnabled(Artifacts.SlipperyTerrain))
                 {
                     enabled = false;
                 }

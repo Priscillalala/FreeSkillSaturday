@@ -18,23 +18,23 @@ partial class FreeSkillSaturday
         #endregion
 
         #region equipment
-        { DeathEye?.nameToken, $"Godless Eye" },
-        { DeathEye?.pickupToken, $"Obliterate all nearby enemies from existence, then yourself. Consumed on use." },
-        { DeathEye?.descriptionToken, $"Obliterate enemies within <style=cIsUtility>{Equipment.GodlessEye.range}m</style> from existence. Then, <style=cIsHealth>obliterate yourself from existence</style>. Equipment is <style=cIsUtility>consumed</style> on use." },
-        { DeathEyeConsumed?.nameToken, $"Godless Eye (Consumed)" },
-        { DeathEyeConsumed?.pickupToken, $"Still shocking to the touch. Does nothing." },
-        { DeathEyeConsumed?.descriptionToken, $"Still shocking to the touch. Does nothing." },
+        { Equipment.DeathEye?.nameToken, $"Godless Eye" },
+        { Equipment.DeathEye?.pickupToken, $"Obliterate all nearby enemies from existence, then yourself. Consumed on use." },
+        { Equipment.DeathEye?.descriptionToken, $"Obliterate enemies within <style=cIsUtility>{GodlessEye.range}m</style> from existence. Then, <style=cIsHealth>obliterate yourself from existence</style>. Equipment is <style=cIsUtility>consumed</style> on use." },
+        { Equipment.DeathEyeConsumed?.nameToken, $"Godless Eye (Consumed)" },
+        { Equipment.DeathEyeConsumed?.pickupToken, $"Still shocking to the touch. Does nothing." },
+        { Equipment.DeathEyeConsumed?.descriptionToken, $"Still shocking to the touch. Does nothing." },
         #endregion
 
         #region elites
-        { Magnetic?.GetModifierToken(), "Magnetic {0}" },
-        { Water?.GetModifierToken(), "Tidal {0}" },
-        { Barrier?.GetModifierToken(), "Crystalline {0}" },
+        { Elites.Magnetic?.ModifierToken, "Magnetic {0}" },
+        { Elites.Water?.ModifierToken, "Tidal {0}" },
+        { Elites.Barrier?.ModifierToken, "Crystalline {0}" },
         #endregion
 
         #region artifacts
-        { SlipperyTerrain?.nameToken, $"Artifact of Entropy" },
-        { SlipperyTerrain?.descriptionToken, $"Terrain is smooth and frictionless." },
+        { Artifacts.SlipperyTerrain?.nameToken, $"Artifact of Entropy" },
+        { Artifacts.SlipperyTerrain?.descriptionToken, $"Terrain is smooth and frictionless." },
         #endregion
 
         #region skills
