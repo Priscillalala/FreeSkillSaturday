@@ -18,7 +18,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Include="..\manifest.json" Link="package\manifest.json" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <None Include="..\.editorconfig" Link=".editorconfig" />
+	  <None Include="..\CHANGELOG.md" Link="package\CHANGELOG.md" />
+	  <None Include="..\README.md" Link="package\README.md" />
 	</ItemGroup>
 
 	<ItemGroup>

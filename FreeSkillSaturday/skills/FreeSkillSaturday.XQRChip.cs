@@ -6,6 +6,7 @@ using RoR2.UI;
 using JetBrains.Annotations;
 using EntityStates.Railgunner.Weapon;
 using EntityStates.Railgunner.Scope;
+using HG;
 
 namespace FreeItemFriday;
 
@@ -58,7 +59,7 @@ partial class FreeSkillSaturday
 
             public override BaseSkillInstanceData OnAssigned([NotNull] GenericSkill skillSlot)
             {
-                SmartTarget.hurtBoxSmartTargets ??= new Dictionary<HurtBox, HashSet<SmartTarget>>();
+                SmartTarget.hurtBoxSmartTargets ??= new Dictionary<UnityObjectWrapperKey<HurtBox>, HashSet<SmartTarget>>();
                 SmartTarget.smartTargetPool ??= new Stack<SmartTarget>();
                 (assignedInstances ??= new HashSet<GameObject>()).Add(skillSlot.gameObject);
                 smartScopeOverlayPrefabs ??= new Dictionary<GameObject, GameObject>();
@@ -433,9 +434,9 @@ partial class FreeSkillSaturday
             private void UpdateTargetVisualizers()
             {
                 _smartTargetToVisualizer.AddRange(smartTargetToVisualizer);
-                foreach (KeyValuePair<SmartTarget, GameObject> pair in _smartTargetToVisualizer)
+                foreach (KeyValuePair<UnityObjectWrapperKey<SmartTarget>, GameObject> pair in _smartTargetToVisualizer)
                 {
-                    if (!pair.Key.target)
+                    if (!pair.Key.value.target)
                     {
                         pointViewer.RemoveElement(pair.Value);
                         smartTargetToVisualizer.Remove(pair.Key);
@@ -462,15 +463,15 @@ partial class FreeSkillSaturday
 
             private PointViewer pointViewer;
             private HUD hud;
-            private Dictionary<SmartTarget, GameObject> smartTargetToVisualizer = new Dictionary<SmartTarget, GameObject>();
+            private Dictionary<UnityObjectWrapperKey<SmartTarget>, GameObject> smartTargetToVisualizer = new Dictionary<UnityObjectWrapperKey<SmartTarget>, GameObject>();
             private List<SmartTarget> smartTargets = new List<SmartTarget>();
-            private List<KeyValuePair<SmartTarget, GameObject>> _smartTargetToVisualizer = new List<KeyValuePair<SmartTarget, GameObject>>();
-            private Dictionary<HurtBox, Vector3> relativeHurtBoxPositionsCache = new Dictionary<HurtBox, Vector3>();
+            private List<KeyValuePair<UnityObjectWrapperKey<SmartTarget>, GameObject>> _smartTargetToVisualizer = new List<KeyValuePair<UnityObjectWrapperKey<SmartTarget>, GameObject>>();
+            private Dictionary<UnityObjectWrapperKey<HurtBox>, Vector3> relativeHurtBoxPositionsCache = new Dictionary<UnityObjectWrapperKey<HurtBox>, Vector3>();
         }
 
         public class SmartTarget : MonoBehaviour
         {
-            public static Dictionary<HurtBox, HashSet<SmartTarget>> hurtBoxSmartTargets = new Dictionary<HurtBox, HashSet<SmartTarget>>();
+            public static Dictionary<UnityObjectWrapperKey<HurtBox>, HashSet<SmartTarget>> hurtBoxSmartTargets = new Dictionary<UnityObjectWrapperKey<HurtBox>, HashSet<SmartTarget>>();
             public static Stack<SmartTarget> smartTargetPool = new Stack<SmartTarget>();
 
             public GameObject ownerBodyObject;
