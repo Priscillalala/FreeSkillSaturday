@@ -7,7 +7,6 @@ using RoR2.Projectile;
 using UnityEngine.UI;
 using RoR2.UI;
 using TMPro;
-using System.Threading.Tasks;
 
 namespace FreeItemFriday;
 
@@ -20,18 +19,24 @@ partial class FreeSkillSaturday
         public static float firingDelay = 0.3f;
 
         public static DamageAPI.ModdedDamageType Shock2s { get; private set; }
+        public static GameObject GrenadeExplosionEffect { get; private set; }
+        public static GameObject GrenadeGhost { get; private set; }
         public static GameObject GrenadeProjectile { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<RailgunSkillDef> _railgunnerBodyFirePistol = "RoR2/DLC1/Railgunner/RailgunnerBodyFirePistol.asset";
-            using RoR2Asset<SkillFamily> _railgunnerBodyPrimaryFamily = "RoR2/DLC1/Railgunner/RailgunnerBodyPrimaryFamily.asset";
-            using RoR2Asset<GameObject> _railgunnerCrosshair = "RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab";
-            using RoR2Asset<GameObject> _railgunnerCryochargeCrosshair = "RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab";
-            using Task<GameObject> _grenadeProjectile = CreateGrenadeProjectileAsync(Shock2s = DamageAPI.ReserveDamageType());
+            Shock2s = DamageAPI.ReserveDamageType();
 
-            Content.Skills.RailgunnerElectricGrenade = Expansion.DefineSkill<RailgunSkillDef>("RailgunnerElectricGrenade")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texRailgunnerElectricGrenadeIcon"))
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
+
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerElectricGrenadeIcon", out var texRailgunnerElectricGrenadeIcon);
+            yield return Ivyl.LoadAddressableAssetAsync<RailgunSkillDef>("RoR2/DLC1/Railgunner/RailgunnerBodyFirePistol.asset", out var RailgunnerBodyFirePistol);
+
+            Skills.RailgunnerElectricGrenade = Instance.Content.DefineSkill<RailgunSkillDef>("RailgunnerElectricGrenade")
+                .SetIconSprite(texRailgunnerElectricGrenadeIcon.asset)
                 .SetActivationState(typeof(EntityStates.Railgunner.Weapon.FireElectricGrenade), "Weapon")
                 .SetInterruptPriority(EntityStates.InterruptPriority.Any)
                 .SetCooldown(0f)
@@ -39,20 +44,19 @@ partial class FreeSkillSaturday
                 .SetRechargeStock(0)
                 .SetRequiredStock(0)
                 .SetStockToConsume(0)
-                .SetKeywordTokens("KEYWORD_SHOCKING");
+                .SetKeywordTokens("KEYWORD_SHOCKING")
+                .SetAdditionalFields(railgunSkillDef => railgunSkillDef.offlineIcon = RailgunnerBodyFirePistol.Result.offlineIcon);
 
-            RailgunSkillDef railgunnerBodyFirePistol = await _railgunnerBodyFirePistol;
-            (Content.Skills.RailgunnerElectricGrenade as RailgunSkillDef).offlineIcon = railgunnerBodyFirePistol.offlineIcon;
+            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerBodyPrimaryFamily.asset", out var RailgunnerBodyPrimaryFamily);
 
-            Content.Achievements.RailgunnerHipster = Expansion.DefineAchievementForSkill("RailgunnerHipster", Content.Skills.RailgunnerElectricGrenade)
-                .SetIconSprite(Content.Skills.RailgunnerElectricGrenade.icon)
+            Achievements.RailgunnerHipster = Instance.Content.DefineAchievementForSkill("RailgunnerHipster", ref RailgunnerBodyPrimaryFamily.Result.AddSkill(Skills.RailgunnerElectricGrenade))
+                .SetIconSprite(Skills.RailgunnerElectricGrenade.icon)
                 .SetTrackerTypes(typeof(RailgunnerHipsterAchievement), null);
 
-            SkillFamily railgunnerBodyPrimaryFamily = await _railgunnerBodyPrimaryFamily;
-            railgunnerBodyPrimaryFamily.AddSkill(Content.Skills.RailgunnerElectricGrenade, Content.Achievements.RailgunnerHipster.UnlockableDef);
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab", out var RailgunnerCrosshair);
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab", out var RailgunnerCryochargeCrosshair);
 
-            GameObject railgunnerCrossHair = await _railgunnerCrosshair;
-            SetupRailgunnerCrosshair.prefab = Prefabs.ClonePrefab(railgunnerCrossHair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
+            SetupRailgunnerCrosshair.prefab = Ivyl.ClonePrefab(RailgunnerCrosshair.Result.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
             Color color = new Color32(198, 169, 217, 255);
             foreach (Image image in SetupRailgunnerCrosshair.prefab.GetComponentsInChildren<Image>())
             {
@@ -62,124 +66,108 @@ partial class FreeSkillSaturday
             {
                 text.color = color;
             }
-            GameObject railgunnerCryochargeCrosshair = await _railgunnerCryochargeCrosshair;
-            Instantiate(railgunnerCryochargeCrosshair.transform.Find("CenterDot").gameObject, SetupRailgunnerCrosshair.prefab.transform);
-            railgunnerCrossHair.AddComponent<SetupRailgunnerCrosshair>();
+            Instantiate(RailgunnerCryochargeCrosshair.Result.transform.Find("CenterDot").gameObject, SetupRailgunnerCrosshair.prefab.transform);
+            RailgunnerCrosshair.Result.AddComponent<SetupRailgunnerCrosshair>();
 
-            GrenadeProjectile = await _grenadeProjectile;
+            yield return CreateGrenadeProjectileAsync();
         }
 
-        public static async Task<GameObject> CreateGrenadeProjectileAsync(DamageAPI.ModdedDamageType shock2s)
+        public IEnumerator CreateGrenadeProjectileAsync()
         {
-            using Task<GameObject> _grenadeExplosionEffect = CreateGrenadeExplosionEffectAsync();
-            using Task<GameObject> _grenadeGhost = CreateGrenadeGhostAsync();
-            using RoR2Asset<GameObject> _engiGrenadeProjectile = "RoR2/Base/Engi/EngiGrenadeProjectile.prefab";
-            using RoR2Asset<NetworkSoundEventDef> _nseCommandoGrenadeBounce = "RoR2/Base/Commando/nseCommandoGrenadeBounce.asset";
-            using RoR2Asset<SkinDef> _skinRailGunnerAlt = "RoR2/DLC1/Railgunner/skinRailGunnerAlt.asset";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiGrenadeProjectile.prefab", out var EngiGrenadeProjectile);
 
-            GameObject grenadeProjectile = Prefabs.ClonePrefab(await _engiGrenadeProjectile, "RailgunnerElectricGrenadeProjectile");
-            if (grenadeProjectile.TryGetComponent(out ProjectileDamage projectileDamage))
+            GrenadeProjectile = Ivyl.ClonePrefab(EngiGrenadeProjectile.Result, "RailgunnerElectricGrenadeProjectile");
+            if (GrenadeProjectile.TryGetComponent(out ProjectileDamage projectileDamage))
             {
                 projectileDamage.damageType = DamageType.Shock5s;
             }
-            if (grenadeProjectile.TryGetComponent(out ProjectileImpactExplosion projectileImpactExplosion))
+
+            yield return CreateGrenadeExplosionEffectAsync();
+
+            if (GrenadeProjectile.TryGetComponent(out ProjectileImpactExplosion projectileImpactExplosion))
             {
                 projectileImpactExplosion.blastRadius = 5f;
                 projectileImpactExplosion.lifetimeAfterImpact = 0.15f;
-                projectileImpactExplosion.lifetimeExpiredSound = Expansion.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
+                projectileImpactExplosion.lifetimeExpiredSound = Instance.Content.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
                 projectileImpactExplosion.offsetForLifetimeExpiredSound = 0.05f;
-                projectileImpactExplosion.impactEffect = await _grenadeExplosionEffect;
+                projectileImpactExplosion.impactEffect = GrenadeExplosionEffect;
             }
-            if (grenadeProjectile.TryGetComponent(out RigidbodySoundOnImpact rigidbodySoundOnImpact))
+            if (GrenadeProjectile.TryGetComponent(out RigidbodySoundOnImpact rigidbodySoundOnImpact))
             {
+                yield return Ivyl.LoadAddressableAssetAsync<NetworkSoundEventDef>("RoR2/Base/Commando/nseCommandoGrenadeBounce.asset", out var nseCommandoGrenadeBounce);
+
                 rigidbodySoundOnImpact.impactSoundString = string.Empty;
-                rigidbodySoundOnImpact.networkedSoundEvent = await _nseCommandoGrenadeBounce;
+                rigidbodySoundOnImpact.networkedSoundEvent = nseCommandoGrenadeBounce.Result;
             }
-            if (grenadeProjectile.TryGetComponent(out SphereCollider sphereCollider))
+            if (GrenadeProjectile.TryGetComponent(out SphereCollider sphereCollider))
             {
                 sphereCollider.radius = 0.8f;
             }
-            if (grenadeProjectile.TryGetComponent(out ProjectileSimple projectileSimple))
+            if (GrenadeProjectile.TryGetComponent(out ProjectileSimple projectileSimple))
             {
                 projectileSimple.desiredForwardSpeed = 60f;
             }
-            if (grenadeProjectile.TryGetComponent(out ApplyTorqueOnStart applyTorqueOnStart))
+            if (GrenadeProjectile.TryGetComponent(out ApplyTorqueOnStart applyTorqueOnStart))
             {
                 applyTorqueOnStart.localTorque = Vector3.one * 100f;
             }
-            grenadeProjectile.AddComponent<DamageAPI.ModdedDamageTypeHolderComponent>().Add(shock2s);
-            DestroyImmediate(grenadeProjectile.GetComponent<AntiGravityForce>());
-            GameObject grenadeGhost = await _grenadeGhost;
-            grenadeProjectile.GetComponent<ProjectileController>().ghostPrefab = grenadeGhost;
-            Expansion.ProjectilePrefabs.Add(grenadeProjectile);
+            GrenadeProjectile.AddComponent<DamageAPI.ModdedDamageTypeHolderComponent>().Add(Shock2s);
+            DestroyImmediate(GrenadeProjectile.GetComponent<AntiGravityForce>());
 
-            GameObject grenadeGhostReskin = Prefabs.ClonePrefab(grenadeGhost, "RailgunnerElectricGrenadeGhostReskin");
+            yield return CreateGrenadeGhostAsync();
+
+            GrenadeProjectile.GetComponent<ProjectileController>().ghostPrefab = GrenadeGhost;
+            Instance.Content.projectilePrefabs.Add(GrenadeProjectile);
+
+            GameObject grenadeGhostReskin = Ivyl.ClonePrefab(GrenadeGhost, "RailgunnerElectricGrenadeGhostReskin");
             if (grenadeGhostReskin.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenadeReskin) && mdlEngiGrenadeReskin.TryGetComponent(out MeshRenderer meshRendererReskin))
             {
+                yield return Instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenadeAlt", out var texRailgunnerElectricGrenadeAlt);
+
                 Material matRailgunnerElectricGrenadeAlt = new Material(meshRendererReskin.sharedMaterial);
-                matRailgunnerElectricGrenadeAlt.SetTexture("_MainTex", Assets.LoadAsset<Texture>("texRailgunnerElectricGrenadeAlt"));
+                matRailgunnerElectricGrenadeAlt.SetTexture("_MainTex", texRailgunnerElectricGrenadeAlt.asset);
                 meshRendererReskin.sharedMaterial = matRailgunnerElectricGrenadeAlt;
             }
 
-            SkinDef skinRailGunnerAlt = await _skinRailGunnerAlt;
-            ArrayUtils.ArrayAppend(ref skinRailGunnerAlt.projectileGhostReplacements, new SkinDef.ProjectileGhostReplacement
+            yield return Ivyl.LoadAddressableAssetAsync<SkinDef>("RoR2/DLC1/Railgunner/skinRailGunnerAlt.asset", out var skinRailGunnerAlt);
+
+            ArrayUtils.ArrayAppend(ref skinRailGunnerAlt.Result.projectileGhostReplacements, new SkinDef.ProjectileGhostReplacement
             {
-                projectilePrefab = grenadeProjectile,
+                projectilePrefab = GrenadeProjectile,
                 projectileGhostReplacementPrefab = grenadeGhostReskin
             });
-
-            return grenadeProjectile;
         }
 
-        public static async Task<GameObject> CreateGrenadeExplosionEffectAsync()
+        public IEnumerator CreateGrenadeExplosionEffectAsync()
         {
-            using RoR2Asset<GameObject> _captainTazerSupplyDropNova = "RoR2/Base/Captain/CaptainTazerSupplyDropNova.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Captain/CaptainTazerSupplyDropNova.prefab", out var CaptainTazerSupplyDropNova);
 
-            GameObject grenadeExplosionEffect = Prefabs.ClonePrefab(await _captainTazerSupplyDropNova, "RailgunnerElectricGrenadeExplosion");
-            grenadeExplosionEffect.GetComponent<EffectComponent>().soundName = "Play_roboBall_attack1_explode";
-            grenadeExplosionEffect.GetComponent<VFXAttributes>().vfxPriority = VFXAttributes.VFXPriority.Always;
-            Expansion.AddEffectPrefab(grenadeExplosionEffect);
-            return grenadeExplosionEffect;
+            GrenadeExplosionEffect = Ivyl.ClonePrefab(CaptainTazerSupplyDropNova.Result, "RailgunnerElectricGrenadeExplosion");
+            GrenadeExplosionEffect.GetComponent<EffectComponent>().soundName = "Play_roboBall_attack1_explode";
+            GrenadeExplosionEffect.GetComponent<VFXAttributes>().vfxPriority = VFXAttributes.VFXPriority.Always;
+            Instance.Content.AddEffectPrefab(GrenadeExplosionEffect);
         }
 
-        public static async Task<GameObject> CreateGrenadeGhostAsync()
+        public IEnumerator CreateGrenadeGhostAsync()
         {
-            using RoR2Asset<GameObject> _engiGrenadeGhost = "RoR2/Base/Engi/EngiGrenadeGhost.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("\"RoR2/Base/Engi/EngiGrenadeGhost.prefab", out var EngiGrenadeGhost);
 
-            GameObject grenadeGhost = Prefabs.ClonePrefab(await _engiGrenadeGhost, "RailgunnerElectricGrenadeGhost");
-            if (grenadeGhost.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenade))
+            GrenadeGhost = Ivyl.ClonePrefab(EngiGrenadeGhost.Result, "RailgunnerElectricGrenadeGhost");
+            if (GrenadeGhost.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenade))
             {
                 mdlEngiGrenade.localScale = new Vector3(0.3f, 0.3f, 0.5f);
                 if (mdlEngiGrenade.TryGetComponent(out MeshRenderer meshRenderer))
                 {
+                    yield return Instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenade", out var texRailgunnerElectricGrenade);
+
                     Material matRailgunnerElectricGrenade = new Material(meshRenderer.sharedMaterial);
                     matRailgunnerElectricGrenade.SetColor("_EmColor", new Color32(55, 188, 255, 255));
                     matRailgunnerElectricGrenade.SetFloat("_EmPower", 2f);
-                    matRailgunnerElectricGrenade.SetTexture("_MainTex", Assets.LoadAsset<Texture>("texRailgunnerElectricGrenade"));
+                    matRailgunnerElectricGrenade.SetTexture("_MainTex", texRailgunnerElectricGrenade.asset);
                     meshRenderer.sharedMaterial = matRailgunnerElectricGrenade;
                 }
             }
-            return grenadeGhost;
         }
-
-        /*public async void SetupCrosshairAsync()
-        {
-            Task<GameObject> loadRailgunnerCrosshair = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab").Task;
-            Task<GameObject> loadRailgunnerCryochargeCrosshair = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab").Task;
-            GameObject railgunnerCrosshair = await loadRailgunnerCrosshair;
-            SetupRailgunnerCrosshair.prefab = Prefabs.ClonePrefab(railgunnerCrosshair.transform.Find("Flavor, Ready").gameObject, "Flavor, Grenade Ready");
-            Color color = new Color32(198, 169, 217, 255);
-            foreach (Image image in SetupRailgunnerCrosshair.prefab.GetComponentsInChildren<Image>())
-            {
-                image.color = color;
-            }
-            foreach (TextMeshProUGUI text in SetupRailgunnerCrosshair.prefab.GetComponentsInChildren<TextMeshProUGUI>())
-            {
-                text.color = color;
-            }
-            loadRailgunnerCryochargeCrosshair.WhenCompleted(t => Instantiate(t.Result.transform.Find("CenterDot").gameObject, SetupRailgunnerCrosshair.prefab.transform));
-            railgunnerCrosshair.AddComponent<SetupRailgunnerCrosshair>();
-        }*/
 
         public void OnEnable()
         {
@@ -206,7 +194,7 @@ partial class FreeSkillSaturday
                     return duration;
                 });
             }
-            else Logger.LogError($"{nameof(PulseGrenade)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
+            else Instance.Logger.LogError($"{nameof(PulseGrenade)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
         }
 
         public class SetupRailgunnerCrosshair : MonoBehaviour
@@ -220,7 +208,7 @@ partial class FreeSkillSaturday
                 {
                     ArrayUtils.ArrayAppend(ref crosshairController.skillStockSpriteDisplays, new CrosshairController.SkillStockSpriteDisplay
                     {
-                        requiredSkillDef = Content.Skills.RailgunnerElectricGrenade,
+                        requiredSkillDef = Skills.RailgunnerElectricGrenade,
                         skillSlot = SkillSlot.Primary,
                         target = instance
                     });

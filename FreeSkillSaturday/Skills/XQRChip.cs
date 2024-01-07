@@ -1,23 +1,8 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using RoR2.Skills;
-using HG;
+﻿using RoR2.Skills;
 using System.Linq;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
-using RoR2.Projectile;
-using R2API;
 using UnityEngine.UI;
 using RoR2.UI;
-using TMPro;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections;
 using JetBrains.Annotations;
 using EntityStates.Railgunner.Weapon;
 using EntityStates.Railgunner.Scope;
@@ -32,35 +17,37 @@ partial class FreeSkillSaturday
 
         public static GameObject SmartTargetVisualizer { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<SkillFamily> _railgunnerPassiveFamily = "RoR2/DLC1/Railgunner/RailgunnerPassiveFamily.asset";
-            using Task<GameObject> _smartTargetVisualizer = CreateSmartTargetVisualizerAsync();
-
-            Content.Skills.RailgunnerPassiveBouncingBullets = Expansion.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texRailgunnerBouncingBulletsIcon"));
-
-            Content.Achievements.RailgunnerEliteSniper = Expansion.DefineAchievementForSkill("RailgunnerEliteSniper", Content.Skills.RailgunnerPassiveBouncingBullets)
-                .SetIconSprite(Content.Skills.RailgunnerPassiveBouncingBullets.icon)
-                .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
-
-            SkillFamily railgunnerPassiveFamily = await _railgunnerPassiveFamily;
-            railgunnerPassiveFamily.AddSkill(Content.Skills.RailgunnerPassiveBouncingBullets, Content.Achievements.RailgunnerEliteSniper.UnlockableDef);
-
-            SmartTargetVisualizer = await _smartTargetVisualizer;
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
-        public static async Task<GameObject> CreateSmartTargetVisualizerAsync()
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            using RoR2Asset<GameObject> _railgunnerSniperTargetVisualizerHeavy = "RoR2/DLC1/Railgunner/RailgunnerSniperTargetVisualizerHeavy.prefab";
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerBouncingBulletsIcon", out var texRailgunnerBouncingBulletsIcon);
 
-            GameObject smartTargetVisualizer = Prefabs.ClonePrefab(await _railgunnerSniperTargetVisualizerHeavy, "RailgunnerSniperSmartTargetVisualizer");
-            Image outer = smartTargetVisualizer.transform.Find("Scaler/Outer").GetComponent<Image>();
-            Image rectangle = smartTargetVisualizer.transform.Find("Scaler/Rectangle").GetComponent<Image>();
+            Skills.RailgunnerPassiveBouncingBullets = Instance.Content.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
+                .SetIconSprite(texRailgunnerBouncingBulletsIcon.asset);
+
+            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerPassiveFamily.asset", out var RailgunnerPassiveFamily);
+
+            Achievements.RailgunnerEliteSniper = Instance.Content.DefineAchievementForSkill("RailgunnerEliteSniper", ref RailgunnerPassiveFamily.Result.AddSkill(Skills.RailgunnerPassiveBouncingBullets))
+                .SetIconSprite(Skills.RailgunnerPassiveBouncingBullets.icon)
+                .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
+
+            yield return CreateSmartTargetVisualizerAsync();
+        }
+
+        public IEnumerator CreateSmartTargetVisualizerAsync()
+        {
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerSniperTargetVisualizerHeavy.prefab", out var RailgunnerSniperTargetVisualizerHeavy);
+
+            SmartTargetVisualizer = Ivyl.ClonePrefab(RailgunnerSniperTargetVisualizerHeavy.Result, "RailgunnerSniperSmartTargetVisualizer");
+            Image outer = SmartTargetVisualizer.transform.Find("Scaler/Outer").GetComponent<Image>();
+            Image rectangle = SmartTargetVisualizer.transform.Find("Scaler/Rectangle").GetComponent<Image>();
             outer.color = new Color32(79, 32, 29, 101);
             rectangle.color = new Color32(250, 158, 93, 255);
             rectangle.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-            return smartTargetVisualizer;
         }
 
         public class BouncingBulletsSkillDef : SkillDef
@@ -296,7 +283,7 @@ partial class FreeSkillSaturday
                 {
                     if (!smartScopeOverlayPrefabs.TryGetValue(self.scopeOverlayPrefab, out GameObject smartScopeOverlayPrefab))
                     {
-                        smartScopeOverlayPrefab = Prefabs.ClonePrefab(self.scopeOverlayPrefab, "RailgunnerScopeSmartOverlayVariant");
+                        smartScopeOverlayPrefab = Ivyl.ClonePrefab(self.scopeOverlayPrefab, "RailgunnerScopeSmartOverlayVariant");
                         SniperTargetViewer sniperTargetViewer = smartScopeOverlayPrefab.GetComponentInChildren<SniperTargetViewer>();
                         if (sniperTargetViewer)
                         {

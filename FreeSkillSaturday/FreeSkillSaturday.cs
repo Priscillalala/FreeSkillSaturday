@@ -2,6 +2,8 @@
 global using System.Collections;
 global using System.Collections.Generic;
 global using UnityEngine;
+global using UnityEngine.AddressableAssets;
+global using UnityEngine.ResourceManagement.AsyncOperations;
 global using BepInEx;
 global using IvyLibrary;
 global using R2API;
@@ -11,8 +13,6 @@ using System.IO;
 using System.Security;
 using System.Security.Permissions;
 using RoR2.ExpansionManagement;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 [module: UnverifiableCode]
 #pragma warning disable

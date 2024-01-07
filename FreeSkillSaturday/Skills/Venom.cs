@@ -1,22 +1,10 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using RoR2.Items;
-using R2API;
-using RoR2.Skills;
+﻿using RoR2.Skills;
 using JetBrains.Annotations;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using HG;
-using System.Linq;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using EntityStates.BrotherMonster;
 using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
-using System.Threading.Tasks;
 
 namespace FreeItemFriday;
 
@@ -32,52 +20,55 @@ partial class FreeSkillSaturday
 
         public static DotController.DotIndex ToxinDot { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<SkillFamily> _crocoBodyPassiveFamily = "RoR2/Base/Croco/CrocoBodyPassiveFamily.asset";
-            using RoR2Asset<Sprite> _texBuffBleedingIcon = "RoR2/Base/Common/texBuffBleedingIcon.tif";
-            using Task<BurnEffectController.EffectParams> _toxicBurnEffectParams = CreateToxicBurnEffectParamsAsync();
+            Buffs.Toxin = Instance.Content.DefineBuff("Toxin");
+            ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison);
 
-            Content.Skills.CrocoPassiveToxin = Expansion.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texCrocoPassiveVenomIcon"))
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
+
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCrocoPassiveVenomIcon", out var texCrocoPassiveVenomIcon);
+
+            Skills.CrocoPassiveToxin = Instance.Content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
+                .SetIconSprite(texCrocoPassiveVenomIcon.asset)
                 .SetKeywordTokens("FSS_KEYWORD_VENOM");
 
-            Content.Achievements.CrocoKillBossCloaked = Expansion.DefineAchievementForSkill("CrocoKillBossCloaked", Content.Skills.CrocoPassiveToxin)
-                .SetIconSprite(Content.Skills.CrocoPassiveToxin.icon)
+            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset", out var CrocoBodyPassiveFamily);
+
+            Achievements.CrocoKillBossCloaked = Instance.Content.DefineAchievementForSkill("CrocoKillBossCloaked", ref CrocoBodyPassiveFamily.Result.AddSkill(Skills.CrocoPassiveToxin))
+                .SetIconSprite(Skills.CrocoPassiveToxin.icon)
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
 
-            SkillFamily crocoBodyPassiveFamily = await _crocoBodyPassiveFamily;
-            crocoBodyPassiveFamily.AddSkill(Content.Skills.CrocoPassiveToxin, Content.Achievements.CrocoKillBossCloaked.UnlockableDef);
+            yield return Ivyl.LoadAddressableAssetAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif", out var texBuffBleedingIcon);
 
-            Content.Buffs.Toxin = Expansion.DefineBuff("Toxin")
-                .SetIconSprite(await _texBuffBleedingIcon, new Color32(156, 123, 255, 255));
+            Buffs.Toxin.SetIconSprite(texBuffBleedingIcon.Result, new Color32(156, 123, 255, 255));
 
-            Content.Buffs.ToxinSlow = Expansion.DefineBuff("ToxinSlow")
-                //.SetIconSprite(Assets.LoadAsset<Sprite>("texThereminIcon"), Color.blue)
+            Buffs.ToxinSlow = Instance.Content.DefineBuff("ToxinSlow")
                 .SetFlags(BuffFlags.Stackable | BuffFlags.Hidden);
 
-            ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Content.Buffs.Toxin);
-
-            ToxinBuffBehaviour.toxinBurnEffectParams = await _toxicBurnEffectParams;
+            yield return CreateToxicBurnEffectParamsAsync();
         }
 
-        public static async Task<BurnEffectController.EffectParams> CreateToxicBurnEffectParamsAsync()
+        public IEnumerator CreateToxicBurnEffectParamsAsync()
         {
-            using RoR2Asset<Material> _matPoisoned = "RoR2/Base/Croco/matPoisoned.mat";
-            using RoR2Asset<Texture> _texRampTritoneSmoothed = "RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png";
-            using RoR2Asset<Texture> _texCloudLightning1 = "RoR2/Base/Common/texCloudLightning1.png";
-            using RoR2Asset<GameObject> _poisonEffect = "RoR2/Base/Croco/PoisonEffect.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat", out var matPoisoned);
+            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png", out var texRampTritoneSmoothed);
+            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/texCloudLightning1.png", out var texCloudLightning1);
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Croco/PoisonEffect.prefab", out var PoisonEffect);
 
-            Material matToxin = new Material(await _matPoisoned);
+            Material matToxin = new Material(matPoisoned.Result);
             matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
             matToxin.SetFloat("_AlphaBoost", 2.5f);
-            matToxin.SetTexture("_RemapTex", await _texRampTritoneSmoothed);
-            matToxin.SetTexture("_Cloud2Tex", await _texCloudLightning1);
-            return new BurnEffectController.EffectParams
+            matToxin.SetTexture("_RemapTex", texRampTritoneSmoothed.Result);
+            matToxin.SetTexture("_Cloud2Tex", texCloudLightning1.Result);
+            ToxinBuffBehaviour.toxinBurnEffectParams = new BurnEffectController.EffectParams
             {
                 overlayMaterial = matToxin,
-                fireEffectPrefab = await _poisonEffect,
+                fireEffectPrefab = PoisonEffect.Result,
             };
         }
 
@@ -126,7 +117,7 @@ partial class FreeSkillSaturday
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
-            if (sender.HasBuff(Content.Buffs.ToxinSlow, out int count))
+            if (sender.HasBuff(Buffs.ToxinSlow, out int count))
             {
                 float reduction = speedReductionPerSecond * count;
                 if (sender.rigidbody && sender.rigidbody.mass < 250f)
@@ -146,7 +137,7 @@ partial class FreeSkillSaturday
                 c.Emit(OpCodes.Ldarg, 0);
                 c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
             }
-            else Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
+            else Instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
         }
 
         private void FixWeaponSlamPriorityDuration(ILContext il)
@@ -157,17 +148,18 @@ partial class FreeSkillSaturday
                 c.Emit(OpCodes.Ldarg, 0);
                 c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
             }
-            else Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamPriorityDuration)} IL hook failed!");
+            else Instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamPriorityDuration)} IL hook failed!");
         }
 
-        public class ToxinBuffBehaviour : BaseBuffBodyBehavior, IOnTakeDamageServerReceiver, IOnGetStatCoefficientsReciever
+        public class ToxinBuffBehaviour : BaseBuffBodyBehavior, IOnTakeDamageServerReceiver
         {
             [BuffDefAssociation(useOnServer = true, useOnClient = true)]
-            public static BuffDef GetBuffDef() => Content.Buffs.Toxin;
+            public static BuffDef GetBuffDef() => Buffs.Toxin;
 
             public static BurnEffectController.EffectParams toxinBurnEffectParams;
 
             private BurnEffectController burnEffectController;
+            private int _slowBuffCount;
 
             public void OnEnable()
             {
@@ -193,16 +185,19 @@ partial class FreeSkillSaturday
             {
                 if (damageReport.dotType == ToxinDot && Util.CheckRoll(33.3f, damageReport.attackerMaster))
                 {
-                    body.AddBuff(Content.Buffs.ToxinSlow);
+                    body.AddBuff(Buffs.ToxinSlow);
                 }
             }
 
-            public void OnGetStatCoefficients(RecalculateStatsAPI.StatHookEventArgs _)
+            public void Update()
             {
+                if (_slowBuffCount == (_slowBuffCount = body.GetBuffCount(Buffs.ToxinSlow)))
+                {
+                    return;
+                }
                 if (burnEffectController?.temporaryOverlay && burnEffectController.temporaryOverlay.materialInstance)
                 {
-                    float buffCount = body.GetBuffCount(Content.Buffs.ToxinSlow);
-                    float fresnelPower = 3f - buffCount * 0.15f;
+                    float fresnelPower = 3f - _slowBuffCount * 0.15f;
                     burnEffectController.temporaryOverlay.materialInstance.SetFloat("_FresnelPower", Mathf.Clamp(fresnelPower, 0.5f, 3f));
                 }
             }
@@ -211,7 +206,7 @@ partial class FreeSkillSaturday
             {
                 if (NetworkServer.active)
                 {
-                    body.SetBuffCount(Content.Buffs.ToxinSlow.buffIndex, 0);
+                    body.SetBuffCount(Buffs.ToxinSlow.buffIndex, 0);
                 }
             }
         }

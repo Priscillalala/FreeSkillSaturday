@@ -61,6 +61,9 @@ partial class FreeSkillSaturday
             idrs["idrsRailGunner"].AddDisplayRule(itemDisplay, "Pelvis", new Vector3(0.155F, 0.079F, -0.029F), new Vector3(10.264F, 100.904F, 358.845F), new Vector3(0.434F, 0.434F, 0.434F));
             idrs["idrsVoidSurvivor"].AddDisplayRule(itemDisplay, "ShoulderL", new Vector3(0.063F, 0.289F, 0.052F), new Vector3(13.815F, 321.452F, 169.227F), new Vector3(0.597F, 0.597F, 0.597F));
             idrs["idrsScav"].AddDisplayRule(itemDisplay, "Weapon", new Vector3(3.037F, 8.08F, 2.629F), new Vector3(45.304F, 318.616F, 106.156F), new Vector3(5.5F, 5.5F, 5.5F));
+
+            yield return CreateImpactArrowheadAsync();
+            yield return CreateImpactArrowheadStrongerAsync();
         }
 
         public IEnumerator CreateImpactArrowheadAsync()

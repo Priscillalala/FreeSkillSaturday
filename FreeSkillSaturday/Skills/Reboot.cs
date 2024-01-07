@@ -1,24 +1,6 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using RoR2.Skills;
-using HG;
-using System.Linq;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using UnityEngine.Networking;
+﻿using RoR2.Skills;
 using FreeItemFriday.Achievements;
-using RoR2.Projectile;
-using R2API;
 using UnityEngine.UI;
-using RoR2.UI;
-using TMPro;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections;
-using JetBrains.Annotations;
 
 namespace FreeItemFriday;
 
@@ -31,37 +13,40 @@ partial class FreeSkillSaturday
         public static GameObject RebootOverlay { get; private set; }
         public static GameObject VentEffect { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<SkillFamily> _toolbotBodyUtilityFamily = "RoR2/Base/Toolbot/ToolbotBodyUtilityFamily.asset";
-            using Task<GameObject> _rebootOverlay = CreateRebootOverlayAsync();
-            using Task<GameObject> _ventEffect = CreateVentEffectAsync();
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
 
-            Content.Skills.ToolbotReboot = Expansion.DefineSkill<SkillDef>("ToolbotReboot")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texToolbotRebootIcon"))
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texToolbotRebootIcon", out var texToolbotRebootIcon);
+
+            Skills.ToolbotReboot = Instance.Content.DefineSkill<SkillDef>("ToolbotReboot")
+                .SetIconSprite(texToolbotRebootIcon.asset)
                 .SetActivationState(typeof(EntityStates.Toolbot.Reboot), "Body")
                 .SetCooldown(60f)
                 .SetInterruptPriority(EntityStates.InterruptPriority.Skill)
                 .SetFlags(SkillFlags.MustKeyPress | SkillFlags.BeginSkillCooldownOnSkillEnd | SkillFlags.NonCombat | SkillFlags.NoRestockOnAssign | SkillFlags.Agile);
 
-            Content.Achievements.ToolbotOverclocked = Expansion.DefineAchievementForSkill("ToolbotOverclocked", Content.Skills.ToolbotReboot)
-                .SetIconSprite(Content.Skills.ToolbotReboot.icon)
+            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Toolbot/ToolbotBodyUtilityFamily.asset", out var ToolbotBodyUtilityFamily);
+
+            Achievements.ToolbotOverclocked = Instance.Content.DefineAchievementForSkill("ToolbotOverclocked", ref ToolbotBodyUtilityFamily.Result.AddSkill(Skills.ToolbotReboot))
+                .SetIconSprite(Skills.ToolbotReboot.icon)
                 .SetPrerequisiteAchievement("RepeatFirstTeleporter")
                 .SetTrackerTypes(typeof(ToolbotOverclockedAchievement), null);
 
-            SkillFamily toolbotBodyUtilityFamily = await _toolbotBodyUtilityFamily;
-            toolbotBodyUtilityFamily.AddSkill(Content.Skills.ToolbotReboot, Content.Achievements.ToolbotOverclocked.UnlockableDef);
-
-            RebootOverlay = await _rebootOverlay;
-            VentEffect = await _ventEffect;
+            yield return CreateRebootOverlayAsync();
+            yield return CreateVentEffectAsync();
         }
 
-        public static async Task<GameObject> CreateRebootOverlayAsync()
+        public IEnumerator CreateRebootOverlayAsync()
         {
-            using RoR2Asset<GameObject> _railgunnerOfflineUI = "RoR2/DLC1/Railgunner/RailgunnerOfflineUI.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerOfflineUI.prefab", out var RailgunnerOfflineUI);
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRebootUIGear", out var texRebootUIGear);
 
-            GameObject rebootOverley = Prefabs.ClonePrefab(await _railgunnerOfflineUI, "RebootOverlay");
-            Transform barContainer = rebootOverley.transform.Find("BarContainer");
+            RebootOverlay = Ivyl.ClonePrefab(RailgunnerOfflineUI.Result, "RebootOverlay");
+            Transform barContainer = RebootOverlay.transform.Find("BarContainer");
             barContainer.localPosition = Vector3.zero;
             barContainer.localEulerAngles = Vector3.zero;
             barContainer.transform.Find("Inner").localPosition = Vector3.zero;
@@ -69,31 +54,27 @@ partial class FreeSkillSaturday
             backdropImage.transform.localScale = Vector3.one * 1.1f;
             backdropImage.color = new Color32(0, 0, 0, 200);
             Image fillbarImage = barContainer.transform.Find("Inner/FillBarDimensions/FillBar").GetComponent<Image>();
-            fillbarImage.sprite = Assets.LoadAsset<Sprite>("texRebootUIGear");
+            fillbarImage.sprite = texRebootUIGear.asset;
             fillbarImage.color = Color.white;
             DestroyImmediate(barContainer.transform.Find("SoftGlow").gameObject);
             DestroyImmediate(barContainer.transform.Find("Inner/SpinnySquare").gameObject);
-            
-            return rebootOverley;
         }
 
-        public static async Task<GameObject> CreateVentEffectAsync()
+        public IEnumerator CreateVentEffectAsync()
         {
-            using RoR2Asset<GameObject> _chest1Starburst = "RoR2/Base/Chest1/Chest1Starburst.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Chest1/Chest1Starburst.prefab", out var Chest1Starburst);
 
-            GameObject ventEffect = Prefabs.ClonePrefab(await _chest1Starburst, "ToolbotVentEffect");
-            DestroyImmediate(ventEffect.transform.Find("Dust").gameObject);
-            DestroyImmediate(ventEffect.transform.Find("BurstLight").gameObject);
-            DestroyImmediate(ventEffect.transform.Find("Beams").gameObject);
-            ventEffect.AddComponent(out EffectComponent effectComponent);
+            VentEffect = Ivyl.ClonePrefab(Chest1Starburst.Result, "ToolbotVentEffect");
+            DestroyImmediate(VentEffect.transform.Find("Dust").gameObject);
+            DestroyImmediate(VentEffect.transform.Find("BurstLight").gameObject);
+            DestroyImmediate(VentEffect.transform.Find("Beams").gameObject);
+            VentEffect.AddComponent(out EffectComponent effectComponent);
             effectComponent.soundName = "Play_env_geyser_launch";
-            ventEffect.AddComponent(out VFXAttributes vFXAttributes);
+            VentEffect.AddComponent(out VFXAttributes vFXAttributes);
             vFXAttributes.vfxIntensity = VFXAttributes.VFXIntensity.Low;
             vFXAttributes.vfxPriority = VFXAttributes.VFXPriority.Medium;
 
-            Expansion.AddEffectPrefab(ventEffect);
-
-            return ventEffect;
+            Instance.Content.AddEffectPrefab(VentEffect);
         }
     }
 }
