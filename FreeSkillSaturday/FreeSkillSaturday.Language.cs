@@ -1,18 +1,6 @@
-﻿using System;
-using RoR2;
-using UnityEngine;
-using IvyLibrary;
-using static FreeItemFriday.FreeSkillSaturday.Items;
-using static FreeItemFriday.FreeSkillSaturday.Equipment;
-using static FreeItemFriday.FreeSkillSaturday.Elites;
-using static FreeItemFriday.FreeSkillSaturday.Artifacts;
-using static FreeItemFriday.FreeSkillSaturday.Achievements;
-using static FreeItemFriday.FreeSkillSaturday;
-using System.Collections.Generic;
+﻿namespace FreeItemFriday;
 
-namespace FreeItemFriday;
-
-public static class Language
+partial class FreeSkillSaturday
 {
     [LanguageStrings]
     public static Dictionary<string, string> GetEnglish() => new LanguageDictionary()
@@ -21,12 +9,12 @@ public static class Language
         { Expansion.descriptionToken, $"Adds content from the 'Free Item Friday' mod to the game." },
 
         #region items
-        { Theremin?.nameToken, $"Theremin" },
-        { Theremin?.pickupToken, $"Increase attack speed near the Teleporter." },
-        { Theremin?.descriptionToken, $"Increase <style=cIsDamage>attack speed</style> by up to <style=cIsDamage>{Items.Theremin.attackSpeedBonus:0%} <style=cStack>(+{Items.Theremin.attackSpeedBonusPerStack:0%} per stack)</style></style> the closer you are to a Teleporter." },
-        { Arrowhead?.nameToken, $"Flint Arrowhead" },
-        { Arrowhead?.pickupToken, $"Burn enemies for flat damage on hit." },
-        { Arrowhead?.descriptionToken, $"<style=cIsDamage>100%</style> chance to <style=cIsDamage>burn</style> on hit for <style=cIsDamage>{Items.FlintArrowhead.damage} <style=cStack>(+{Items.FlintArrowhead.damagePerStack} per stack)</style></style> damage." },
+        { Items.Theremin?.nameToken, $"Theremin" },
+        { Items.Theremin?.pickupToken, $"Increase attack speed near the Teleporter." },
+        { Items.Theremin?.descriptionToken, $"Increase <style=cIsDamage>attack speed</style> by up to <style=cIsDamage>{Theremin.attackSpeedBonus:0%} <style=cStack>(+{Theremin.attackSpeedBonusPerStack:0%} per stack)</style></style> the closer you are to a Teleporter." },
+        { Items.Arrowhead?.nameToken, $"Flint Arrowhead" },
+        { Items.Arrowhead?.pickupToken, $"Burn enemies for flat damage on hit." },
+        { Items.Arrowhead?.descriptionToken, $"<style=cIsDamage>100%</style> chance to <style=cIsDamage>burn</style> on hit for <style=cIsDamage>{FlintArrowhead.damage} <style=cStack>(+{FlintArrowhead.damagePerStack} per stack)</style></style> damage." },
         #endregion
 
         #region equipment
@@ -65,24 +53,24 @@ public static class Language
         #endregion
 
         #region achievements
-        { BurnMultipleEnemies?.NameToken, "Burn to Kill"  },
-        { BurnMultipleEnemies?.DescriptionToken, "Ignite 10 enemies simultaneously." },
-        { ObtainArtifactSlipperyTerrain?.NameToken, "Trial of Entropy" },
-        { ObtainArtifactSlipperyTerrain?.DescriptionToken, "Complete the Trial of Entropy." },
-        { CompleteMultiplayerUnknownEnding?.NameToken, "Fly Away Together" },
-        { CompleteMultiplayerUnknownEnding?.DescriptionToken, "In multiplayer, obliterate at the Obelisk with a fellow survivor.." },
-        { CrocoKillBossCloaked?.NameToken, "Acrid: Ambush" },
-        { CrocoKillBossCloaked?.DescriptionToken, "As Acrid, defeat a boss monster while invisible." },
-        { CrocoBeatArenaFast?.NameToken, "Acrid: Virulence" },
-        { CrocoBeatArenaFast?.DescriptionToken, "As Acrid, clear the Void Fields on Monsoon before monsters reach Lv. 10." },
-        { RailgunnerTravelDistance?.NameToken, "Railgunner: Star Trek" },
-        { RailgunnerTravelDistance?.DescriptionToken, "As Railgunner, travel 10 miles in a single run." },
-        { RailgunnerHipster?.NameToken, "Railgunner: Hipster" },
-        { RailgunnerHipster?.DescriptionToken, "As Railgunner, complete the Primordial Teleporter event without scoping in." },
-        { RailgunnerEliteSniper?.NameToken, "Railgunner: Supercharged" },
-        { RailgunnerEliteSniper?.DescriptionToken, "As Railgunner, beat the game on Eclipse while carrying a Fuel Array." },
-        { ToolbotOverclocked?.NameToken, "MUL-T: Overclocked" },
-        { ToolbotOverclocked?.DescriptionToken, "As MUL-T, deal damage 100 times in one second." },
+        { Achievements.BurnMultipleEnemies?.NameToken, "Burn to Kill"  },
+        { Achievements.BurnMultipleEnemies?.DescriptionToken, "Ignite 10 enemies simultaneously." },
+        { Achievements.ObtainArtifactSlipperyTerrain?.NameToken, "Trial of Entropy" },
+        { Achievements.ObtainArtifactSlipperyTerrain?.DescriptionToken, "Complete the Trial of Entropy." },
+        { Achievements.CompleteMultiplayerUnknownEnding?.NameToken, "Fly Away Together" },
+        { Achievements.CompleteMultiplayerUnknownEnding?.DescriptionToken, "In multiplayer, obliterate at the Obelisk with a fellow survivor.." },
+        { Achievements.CrocoKillBossCloaked?.NameToken, "Acrid: Ambush" },
+        { Achievements.CrocoKillBossCloaked?.DescriptionToken, "As Acrid, defeat a boss monster while invisible." },
+        { Achievements.CrocoBeatArenaFast?.NameToken, "Acrid: Virulence" },
+        { Achievements.CrocoBeatArenaFast?.DescriptionToken, "As Acrid, clear the Void Fields on Monsoon before monsters reach Lv. 10." },
+        { Achievements.RailgunnerTravelDistance?.NameToken, "Railgunner: Star Trek" },
+        { Achievements.RailgunnerTravelDistance?.DescriptionToken, "As Railgunner, travel 10 miles in a single run." },
+        { Achievements.RailgunnerHipster?.NameToken, "Railgunner: Hipster" },
+        { Achievements.RailgunnerHipster?.DescriptionToken, "As Railgunner, complete the Primordial Teleporter event without scoping in." },
+        { Achievements.RailgunnerEliteSniper?.NameToken, "Railgunner: Supercharged" },
+        { Achievements.RailgunnerEliteSniper?.DescriptionToken, "As Railgunner, beat the game on Eclipse while carrying a Fuel Array." },
+        { Achievements.ToolbotOverclocked?.NameToken, "MUL-T: Overclocked" },
+        { Achievements.ToolbotOverclocked?.DescriptionToken, "As MUL-T, deal damage 100 times in one second." },
         #endregion
     };
 }

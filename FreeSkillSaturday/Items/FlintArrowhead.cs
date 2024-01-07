@@ -1,48 +1,50 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using R2API;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement;
-using HG;
+﻿using HG;
 using FreeItemFriday.Achievements;
-using System.Threading.Tasks;
 
-namespace FreeItemFriday.Items
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class FlintArrowhead : FreeSkillSaturday.Behavior
+    public class FlintArrowhead : MonoBehaviour
     {
         public static float damage = 3f;
         public static float damagePerStack = 3f;
 
-        public DamageColorIndex strongerBurn = ColorsAPI.RegisterDamageColor(new Color32(244, 113, 80, 255));
-        public GameObject impactArrowhead;
-        public GameObject impactArrowheadStronger;
+        public DamageColorIndex StrongerBurn { get; private set; }
+        public static GameObject ImpactArrowhead { get; private set; }
+        public GameObject ImpactArrowheadStronger { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2AssetGroup<ItemDisplayRuleSet> _idrs = RoR2AssetGroups.ItemDisplayRuleSets;
-            using Task<GameObject> _impactArrowhead = CreateImpactArrowheadAsync();
-            using Task<GameObject> _impactArrowheadStronger = CreateImpactArrowheadStrongerAsync(_impactArrowhead);
+            StrongerBurn = ColorsAPI.RegisterDamageColor(new Color32(244, 113, 80, 255));
 
-            Content.Items.Arrowhead = Expansion.DefineItem("Arrowhead")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texArrowheadIcon"))
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
+
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArrowheadIcon", out var texArrowheadIcon);
+            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupArrowhead", out var PickupArrowhead);
+
+            Items.Arrowhead = Instance.Content.DefineItem("Arrowhead")
+                .SetIconSprite(texArrowheadIcon.asset)
                 .SetItemTier(ItemTier.Tier1)
-                .SetPickupModelPrefab(Assets.LoadAsset<GameObject>("PickupArrowhead"), new ModelPanelParams(Vector3.zero, 1, 8))
+                .SetPickupModelPrefab(PickupArrowhead.asset, new ModelPanelParams(Vector3.zero, 1, 8))
                 .SetTags(ItemTag.Damage);
 
-            Content.Achievements.BurnMultipleEnemies = Expansion.DefineAchievementForItem("BurnMultipleEnemies", Content.Items.Arrowhead)
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texBurnMultipleEnemiesIcon"))
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texBurnMultipleEnemiesIcon", out var texBurnMultipleEnemiesIcon);
+
+            Achievements.BurnMultipleEnemies = Instance.Content.DefineAchievementForItem("BurnMultipleEnemies", Items.Arrowhead)
+                .SetIconSprite(texBurnMultipleEnemiesIcon.asset)
                 .SetTrackerTypes(typeof(BurnMultipleEnemiesAchievement), typeof(BurnMultipleEnemiesAchievement.ServerAchievement));
             // Match achievement identifiers from FreeItemFriday
-            Content.Achievements.BurnMultipleEnemies.AchievementDef.identifier = "BurnMultipleEnemies";
+            Achievements.BurnMultipleEnemies.AchievementDef.identifier = "BurnMultipleEnemies";
 
-            GameObject displayModelPrefab = Assets.LoadAsset<GameObject>("DisplayArrowhead");
-            IvyLibrary.SetupItemDisplay(displayModelPrefab);
-            ItemDisplaySpec itemDisplay = new ItemDisplaySpec(Content.Items.Arrowhead, displayModelPrefab);
-            var idrs = await _idrs;
+            yield return Instance.Assets.LoadAssetAsync<GameObject>("DisplayArrowhead", out var DisplayArrowhead);
+
+            Ivyl.SetupItemDisplay(DisplayArrowhead.asset);
+            ItemDisplaySpec itemDisplay = new ItemDisplaySpec(Items.Arrowhead, DisplayArrowhead.asset);
+            var idrs = Instance.itemDisplayRuleSets;
             idrs["idrsCommando"].AddDisplayRule(itemDisplay, "Pelvis", new Vector3(-0.162F, -0.09F, -0.053F), new Vector3(7.522F, 244.056F, 358.818F), new Vector3(0.469F, 0.469F, 0.469F));
             idrs["idrsHuntress"].AddDisplayRule(itemDisplay, "Arrow", new Vector3(0.343F, 0F, 0F), new Vector3(87.415F, 144.866F, 55.112F), new Vector3(0.388F, 0.388F, 0.388F));
             idrs["idrsBandit2"].AddDisplayRule(itemDisplay, "Chest", new Vector3(0.153F, -0.144F, 0.066F), new Vector3(355.538F, 89.398F, 170.59F), new Vector3(0.507F, 0.507F, 0.507F));
@@ -59,25 +61,22 @@ namespace FreeItemFriday.Items
             idrs["idrsRailGunner"].AddDisplayRule(itemDisplay, "Pelvis", new Vector3(0.155F, 0.079F, -0.029F), new Vector3(10.264F, 100.904F, 358.845F), new Vector3(0.434F, 0.434F, 0.434F));
             idrs["idrsVoidSurvivor"].AddDisplayRule(itemDisplay, "ShoulderL", new Vector3(0.063F, 0.289F, 0.052F), new Vector3(13.815F, 321.452F, 169.227F), new Vector3(0.597F, 0.597F, 0.597F));
             idrs["idrsScav"].AddDisplayRule(itemDisplay, "Weapon", new Vector3(3.037F, 8.08F, 2.629F), new Vector3(45.304F, 318.616F, 106.156F), new Vector3(5.5F, 5.5F, 5.5F));
-
-            impactArrowhead = await _impactArrowhead;
-            impactArrowheadStronger = await _impactArrowheadStronger;
         }
 
-        public static async Task<GameObject> CreateImpactArrowheadAsync()
+        public IEnumerator CreateImpactArrowheadAsync()
         {
-            using RoR2Asset<GameObject> _omniExplosionVFXQuick = "RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab", out var OmniExplosionVFXQuick);
 
-            GameObject impactArrowhead = Prefabs.ClonePrefab(await _omniExplosionVFXQuick, "ImpactArrowhead");
-            if (impactArrowhead.TryGetComponent(out EffectComponent effectComponent))
+            ImpactArrowhead = Ivyl.ClonePrefab(OmniExplosionVFXQuick.Result, "ImpactArrowhead");
+            if (ImpactArrowhead.TryGetComponent(out EffectComponent effectComponent))
             {
                 effectComponent.soundName = "Play_item_proc_strengthenBurn";
             }
-            if (impactArrowhead.TryGetComponent(out VFXAttributes vFXAttributes))
+            if (ImpactArrowhead.TryGetComponent(out VFXAttributes vFXAttributes))
             {
                 vFXAttributes.vfxPriority = VFXAttributes.VFXPriority.Low;
             }
-            if (impactArrowhead.TryGetComponent(out OmniEffect omniEffect))
+            if (ImpactArrowhead.TryGetComponent(out OmniEffect omniEffect))
             {
                 for (int i = omniEffect.omniEffectGroups.Length - 1; i >= 0; i--)
                 {
@@ -93,18 +92,16 @@ namespace FreeItemFriday.Items
                     }
                 }
             }
-            Expansion.AddEffectPrefab(impactArrowhead);
-            return impactArrowhead;
+            Instance.Content.AddEffectPrefab(ImpactArrowhead);
         }
 
-        public static async Task<GameObject> CreateImpactArrowheadStrongerAsync(Task<GameObject> _impactArrowhead)
+        public IEnumerator CreateImpactArrowheadStrongerAsync()
         {
-            using RoR2Asset<Material> _matOmniHitspark3Gasoline = "RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat";
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat", out var matOmniHitspark3Gasoline);
 
-            GameObject impactArrowheadStronger = Prefabs.ClonePrefab(await _impactArrowhead, "ImpactArrowHeadStronger");
-            impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = await _matOmniHitspark3Gasoline;
-            Expansion.AddEffectPrefab(impactArrowheadStronger);
-            return impactArrowheadStronger;
+            GameObject impactArrowheadStronger = Ivyl.ClonePrefab(ImpactArrowhead, "ImpactArrowHeadStronger");
+            impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = matOmniHitspark3Gasoline.Result;
+            Instance.Content.AddEffectPrefab(impactArrowheadStronger);
         }
 
         public void OnEnable()
@@ -122,19 +119,19 @@ namespace FreeItemFriday.Items
         private void DotController_InitDotCatalog(On.RoR2.DotController.orig_InitDotCatalog orig)
         {
             orig();
-            DotController.dotDefs[(int)DotController.DotIndex.StrongerBurn].damageColorIndex = strongerBurn;
+            DotController.dotDefs[(int)DotController.DotIndex.StrongerBurn].damageColorIndex = StrongerBurn;
         }
 
         private void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
         {
-            if (damageInfo.attacker && damageInfo.attacker.TryGetComponent(out CharacterBody attackerBody) && attackerBody.HasItem(Content.Items.Arrowhead, out int stack) && Util.CheckRoll(100f * damageInfo.procCoefficient, attackerBody.master))
+            if (damageInfo.attacker && damageInfo.attacker.TryGetComponent(out CharacterBody attackerBody) && attackerBody.HasItem(Items.Arrowhead, out int stack) && Util.CheckRoll(100f * damageInfo.procCoefficient, attackerBody.master))
             {
                 InflictDotInfo inflictDotInfo = new InflictDotInfo
                 {
                     attackerObject = damageInfo.attacker,
                     dotIndex = DotController.DotIndex.Burn,
                     victimObject = victim,
-                    totalDamage = IvyLibrary.StackScaling(damage, damagePerStack, stack),
+                    totalDamage = Ivyl.StackScaling(damage, damagePerStack, stack),
                 };
                 StrengthenBurnUtils.CheckDotForUpgrade(attackerBody.inventory, ref inflictDotInfo);
                 DotController.DotDef dotDef = DotController.GetDotDef(inflictDotInfo.dotIndex);
@@ -154,7 +151,7 @@ namespace FreeItemFriday.Items
                     if (inflictDotInfo.victimObject && inflictDotInfo.victimObject.TryGetComponent(out CharacterBody victimBody) && victimBody.healthComponent)
                     {
                         victimBody.healthComponent.TakeDamage(burnDamageInfo);
-                        EffectManager.SpawnEffect(inflictDotInfo.dotIndex == DotController.DotIndex.Burn ? impactArrowhead : impactArrowheadStronger, new EffectData
+                        EffectManager.SpawnEffect(inflictDotInfo.dotIndex == DotController.DotIndex.Burn ? ImpactArrowhead : ImpactArrowheadStronger, new EffectData
                         {
                             origin = damageInfo.position,
                             rotation = Util.QuaternionSafeLookRotation(-damageInfo.force),

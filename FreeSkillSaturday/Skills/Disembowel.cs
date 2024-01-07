@@ -12,7 +12,7 @@ partial class FreeSkillSaturday
     {
         public static float damageCoefficient = 2f;
 
-        public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; } = DamageAPI.ReserveDamageType();
+        public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; }
         public static GameObject CrocoSuperBiteEffect { get; private set; }
 
         public void Awake()
@@ -49,7 +49,7 @@ partial class FreeSkillSaturday
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat", out var matCrocoGooSmall2);
             yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png", out var texRampPoison);
 
-            CrocoSuperBiteEffect = Prefabs.ClonePrefab(CrocoBiteEffect.Result, "CrocoSuperBiteEffect");
+            CrocoSuperBiteEffect = Ivyl.ClonePrefab(CrocoBiteEffect.Result, "CrocoSuperBiteEffect");
             if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
             {
                 gooRenderer.sharedMaterial = matCrocoGooSmall2.Result;

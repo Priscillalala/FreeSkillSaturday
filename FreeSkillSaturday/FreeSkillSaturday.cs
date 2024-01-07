@@ -11,6 +11,8 @@ using System.IO;
 using System.Security;
 using System.Security.Permissions;
 using RoR2.ExpansionManagement;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 [module: UnverifiableCode]
 #pragma warning disable
@@ -27,11 +29,12 @@ namespace FreeItemFriday;
 [BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "2.0.0")]
 public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
 {
-    public AssetBundle Assets { get; private set; }
+    public static ExpansionDef Expansion;
 
     private AssetBundleCreateRequest freeitemfridayassets;
+    protected IDictionary<string, ItemDisplayRuleSet> itemDisplayRuleSets;
 
-    public static ExpansionDef Expansion;
+    public AssetBundle Assets { get; private set; }
 
     public void Awake()
     {
@@ -53,6 +56,10 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
             .SetIconSprite(texFreeItemFridayExpansionIcon.asset);
 
         Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly);
+
+        IEnumerable keys = new[] { "ContentPack:RoR2.BaseContent", "ContentPack:RoR2.DLC1" };
+        yield return Ivyl.LoadAddressableAssetsAsync<ItemDisplayRuleSet>(keys, out var idrs);
+        itemDisplayRuleSets = idrs.Result;
     }
 
     private new IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
