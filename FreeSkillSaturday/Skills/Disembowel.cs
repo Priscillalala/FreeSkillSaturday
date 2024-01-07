@@ -1,89 +1,78 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using RoR2.Items;
-using R2API;
-using RoR2.Skills;
-using JetBrains.Annotations;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using HG;
-using System.Linq;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using EntityStates.BrotherMonster;
-using UnityEngine.Networking;
+﻿using RoR2.Skills;
 using FreeItemFriday.Achievements;
 using EntityStates;
 using System.Threading.Tasks;
 
-namespace FreeItemFriday.Skills
+
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class Disembowel : FreeSkillSaturday.Behavior
+    public class Disembowel : MonoBehaviour
     {
         public static float damageCoefficient = 2f;
 
-        public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; }
+        public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; } = DamageAPI.ReserveDamageType();
         public static GameObject CrocoSuperBiteEffect { get; private set; }
 
-        public async void Awake()
+        public void Awake()
         {
-            using RoR2Asset<SkillFamily> _crocoBodySpecialFamily = "RoR2/Base/Croco/CrocoBodySpecialFamily.asset";
-            using Task<GameObject> _crocoSuperBiteEffect = CreateCrocoSuperBiteEffectAsync();
+            SuperBleedOnHit = DamageAPI.ReserveDamageType();
 
-            Content.Skills.CrocoSuperBite = Expansion.DefineSkill<SkillDef>("CrocoSuperBite")
-                .SetIconSprite(Assets.LoadAsset<Sprite>("texCrocoSuperBiteIcon"))
+            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+        }
+
+        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        {
+            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCrocoSuperBiteIcon", out var texCrocoSuperBiteIcon);
+
+            Skills.CrocoSuperBite = Instance.Content.DefineSkill<SkillDef>("CrocoSuperBite")
+                .SetIconSprite(texCrocoSuperBiteIcon.asset)
                 .SetActivationState(typeof(EntityStates.Croco.SuperBite), "Weapon")
                 .SetCooldown(10f)
                 .SetInterruptPriority(InterruptPriority.PrioritySkill)
                 .SetKeywordTokens("KEYWORD_POISON", "KEYWORD_SLAYER", "FSS_KEYWORD_BLEED", "KEYWORD_SUPERBLEED");
 
-            SuperBleedOnHit = DamageAPI.ReserveDamageType();
+            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset", out var CrocoBodySpecialFamily);
 
-            Content.Achievements.CrocoBeatArenaFast = Expansion.DefineAchievementForSkill("CrocoBeatArenaFast", Content.Skills.CrocoSuperBite)
-                .SetIconSprite(Content.Skills.CrocoSuperBite.icon)
+            Achievements.CrocoBeatArenaFast = Instance.Content.DefineAchievementForSkill("CrocoBeatArenaFast", ref CrocoBodySpecialFamily.Result.AddSkill(Skills.CrocoSuperBite))
+                .SetIconSprite(Skills.CrocoSuperBite.icon)
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
 
-            SkillFamily crocoBodySpecialFamily = await _crocoBodySpecialFamily;
-            crocoBodySpecialFamily.AddSkill(Content.Skills.CrocoSuperBite, Content.Achievements.CrocoBeatArenaFast.UnlockableDef);
-
-            CrocoSuperBiteEffect = await _crocoSuperBiteEffect;
+            yield return CreateCrocoSuperBiteEffectAsync();
         }
 
-        public static async Task<GameObject> CreateCrocoSuperBiteEffectAsync()
+        public IEnumerator CreateCrocoSuperBiteEffectAsync()
         {
-            using RoR2Asset<GameObject> _crocoBiteEffect = "RoR2/Base/Croco/CrocoBiteEffect.prefab";
-            using RoR2Asset<Material> _matCrocoGooSmall2 = "RoR2/Base/Croco/matCrocoGooSmall2.mat";
-            using RoR2Asset<Texture> _texRampPoison = "RoR2/Base/Common/ColorRamps/texRampPoison.png";
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab", out var CrocoBiteEffect);
+            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat", out var matCrocoGooSmall2);
+            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png", out var texRampPoison);
 
-            GameObject crocoSuperBiteEffect = Prefabs.ClonePrefab(await _crocoBiteEffect, "CrocoSuperBiteEffect");
-            if (crocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
+            CrocoSuperBiteEffect = Prefabs.ClonePrefab(CrocoBiteEffect.Result, "CrocoSuperBiteEffect");
+            if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
             {
-                gooRenderer.sharedMaterial = await _matCrocoGooSmall2;
+                gooRenderer.sharedMaterial = matCrocoGooSmall2.Result;
             }
             float multiplier = 1.2f;
-            if (crocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
+            if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
             {
                 swingTrail.localScale *= multiplier;
                 if (swingTrail.TryGetComponent(out ParticleSystemRenderer swingTrailRenderer))
                 {
                     swingTrailRenderer.sharedMaterial = new Material(swingTrailRenderer.sharedMaterial);
                     swingTrailRenderer.sharedMaterial.SetColor("_TintColor", new Color32(121, 255, 107, 255));
-                    swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", await _texRampPoison);
+                    swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", texRampPoison.Result);
                 }
             }
-            if (crocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
+            if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
             {
                 swingTrailDistortion.localScale *= multiplier;
             }
-            if (crocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
+            if (CrocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
             {
                 flash.localScale *= multiplier;
             }
-            return crocoSuperBiteEffect;
         }
 
         public void OnEnable()

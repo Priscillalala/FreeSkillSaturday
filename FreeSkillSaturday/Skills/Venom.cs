@@ -18,9 +18,11 @@ using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
 using System.Threading.Tasks;
 
-namespace FreeItemFriday.Skills
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class Venom : FreeSkillSaturday.Behavior
+    public class Venom : MonoBehaviour
     {
         public static float damageCoefficientPerSecond = 1f;
         public static float duration = 5f;

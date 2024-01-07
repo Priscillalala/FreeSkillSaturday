@@ -1,12 +1,16 @@
-﻿using BepInEx;
-using BepInEx.Logging;
-using Ivyl;
-using System;
+﻿global using System;
+global using System.Collections;
+global using System.Collections.Generic;
+global using UnityEngine;
+global using BepInEx;
+global using IvyLibrary;
+global using R2API;
+global using RoR2;
+global using RoR2.ContentManagement;
 using System.IO;
 using System.Security;
 using System.Security.Permissions;
-using UnityEngine;
-using R2API;
+using RoR2.ExpansionManagement;
 
 [module: UnverifiableCode]
 #pragma warning disable
@@ -14,33 +18,46 @@ using R2API;
 #pragma warning restore
 [assembly: HG.Reflection.SearchableAttribute.OptIn]
 
-namespace FreeItemFriday
+namespace FreeItemFriday;
+
+[BepInDependency(RecalculateStatsAPI.PluginGUID)]
+[BepInDependency(ColorsAPI.PluginGUID)]
+[BepInDependency(DamageAPI.PluginGUID)]
+[BepInDependency(DotAPI.PluginGUID)]
+[BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "2.0.0")]
+public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
 {
-    [BepInPlugin("com.groovesalad.FreeItemFriday", "FreeItemFriday", "1.6.1")]
-    [BepInConfig("FreeItemFriday", BepInConfig.ComponentGroupingFlags.ByComponent | BepInConfig.ComponentGroupingFlags.ByNamespace)]
-    [BepInDependency(RecalculateStatsAPI.PluginGUID)]
-    [BepInDependency(ColorsAPI.PluginGUID)]
-    [BepInDependency(DamageAPI.PluginGUID)]
-    [BepInDependency(DotAPI.PluginGUID)]
-    public class FreeSkillSaturday : BaseUnityPlugin<FreeSkillSaturday>
+    public AssetBundle Assets { get; private set; }
+
+    private AssetBundleCreateRequest freeitemfridayassets;
+
+    public static ExpansionDef Expansion;
+
+    public void Awake()
     {
-        public AssetBundle assets;
-        public ExpansionPackage expansion;
+        freeitemfridayassets = this.LoadAssetBundleAsync("freeitemfridayassets");
+        loadStaticContentAsync += LoadStaticContentAsync;
+        finalizeAsync += FinalizeAsync;
+    }
 
-        public void Awake()
+    private new IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+    {
+        if (!freeitemfridayassets.isDone)
         {
-            assets = this.LoadAssetBundle("freeitemfridayassets", true);
-            expansion = new ExpansionPackage("groovesalad.FreeItemFriday", "FSS")
-                .SetIconSprite(assets.LoadAsset<Sprite>("texFreeItemFridayExpansionIcon"));
-            expansion.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly);
+            yield return freeitemfridayassets;
         }
+        Assets = freeitemfridayassets.assetBundle;
 
-        [PluginComponent(typeof(FreeSkillSaturday), PluginComponent.Flags.ConfigComponent | PluginComponent.Flags.ConfigStaticFields)]
-        public abstract class Behavior : MonoBehaviour
-        {
-            public static AssetBundle Assets => Instance.assets;
-            public static ExpansionPackage Expansion => Instance.expansion;
-            public static ManualLogSource Logger => Instance.Logger;
-        }
+        yield return Assets.LoadAssetAsync<Sprite>("texFreeItemFridayExpansionIcon", out var texFreeItemFridayExpansionIcon);
+        Expansion = Content.DefineExpansion()
+            .SetIconSprite(texFreeItemFridayExpansionIcon.asset);
+
+        Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly);
+    }
+
+    private new IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
+    {
+        freeitemfridayassets.assetBundle?.Unload(false);
+        yield break;
     }
 }

@@ -20,9 +20,11 @@ using System.Collections.Generic;
 using System.Collections;
 using JetBrains.Annotations;
 
-namespace FreeItemFriday.Skills
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class Reboot : FreeSkillSaturday.Behavior
+    public class Reboot : MonoBehaviour
     {
         public static float duration = 3f;
 

@@ -1,34 +1,19 @@
-﻿using BepInEx;
-using Ivyl;
-using System;
-using UnityEngine;
-using RoR2;
-using RoR2.Items;
-using RoR2.Skills;
-using JetBrains.Annotations;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
+﻿using RoR2.Skills;
 using HG;
-using System.Linq;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using EntityStates.BrotherMonster;
-using UnityEngine.Networking;
 using FreeItemFriday.Achievements;
 using RoR2.Projectile;
-using R2API;
 using UnityEngine.UI;
 using RoR2.UI;
 using TMPro;
 using System.Threading.Tasks;
-using System.Linq.Expressions;
-using System.Collections.Generic;
-using System.Collections;
-using UnityEngine.ResourceManagement.ResourceLocations;
 
-namespace FreeItemFriday.Skills
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class PulseGrenade : FreeSkillSaturday.Behavior
+    public class PulseGrenade : MonoBehaviour
     {
         public static float damageCoefficient = 3f;
         public static float duration = 1.3f;
@@ -77,7 +62,7 @@ namespace FreeItemFriday.Skills
             {
                 text.color = color;
             }
-            GameObject railgunnerCryochargeCrosshair =  await _railgunnerCryochargeCrosshair;
+            GameObject railgunnerCryochargeCrosshair = await _railgunnerCryochargeCrosshair;
             Instantiate(railgunnerCryochargeCrosshair.transform.Find("CenterDot").gameObject, SetupRailgunnerCrosshair.prefab.transform);
             railgunnerCrossHair.AddComponent<SetupRailgunnerCrosshair>();
 
@@ -91,7 +76,7 @@ namespace FreeItemFriday.Skills
             using RoR2Asset<GameObject> _engiGrenadeProjectile = "RoR2/Base/Engi/EngiGrenadeProjectile.prefab";
             using RoR2Asset<NetworkSoundEventDef> _nseCommandoGrenadeBounce = "RoR2/Base/Commando/nseCommandoGrenadeBounce.asset";
             using RoR2Asset<SkinDef> _skinRailGunnerAlt = "RoR2/DLC1/Railgunner/skinRailGunnerAlt.asset";
-            
+
             GameObject grenadeProjectile = Prefabs.ClonePrefab(await _engiGrenadeProjectile, "RailgunnerElectricGrenadeProjectile");
             if (grenadeProjectile.TryGetComponent(out ProjectileDamage projectileDamage))
             {

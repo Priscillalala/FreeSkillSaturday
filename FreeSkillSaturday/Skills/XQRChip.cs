@@ -22,9 +22,11 @@ using JetBrains.Annotations;
 using EntityStates.Railgunner.Weapon;
 using EntityStates.Railgunner.Scope;
 
-namespace FreeItemFriday.Skills
+namespace FreeItemFriday;
+
+partial class FreeSkillSaturday
 {
-    public class XQRChip : FreeSkillSaturday.Behavior
+    public class XQRChip : MonoBehaviour
     {
         public static float bounceRadius = 30f;
 
