@@ -6,15 +6,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Elites\**" />
-	  <EmbeddedResource Remove="Elites\**" />
-	  <None Remove="Elites\**" />
+	  <Compile Remove="elites\**" />
+	  <EmbeddedResource Remove="elites\**" />
+	  <None Remove="elites\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Compile Remove="entitystates\RepairSelf.cs" />
 	  <Compile Remove="ScrapUtil.cs" />
-	  <Compile Remove="skills\FieldRepairs.cs" />
+	  <Compile Remove="skills\FreeSkillSaturday.FieldRepairs.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
