@@ -11,25 +11,25 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texThereminIcon", out var texThereminIcon);
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupTheremin", out var PickupTheremin);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texThereminIcon", out var texThereminIcon);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("PickupTheremin", out var PickupTheremin);
 
-            Items.Theremin = Instance.Content.DefineItem("Theremin")
+            Items.Theremin = instance.Content.DefineItem("Theremin")
                 .SetIconSprite(texThereminIcon.asset)
                 .SetItemTier(ItemTier.Tier2)
                 .SetPickupModelPrefab(PickupTheremin.asset, new ModelPanelParams(new Vector3(56, 180, 0), 1, 5))
                 .SetTags(ItemTag.Damage, ItemTag.InteractableRelated, ItemTag.OnKillEffect);
 
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("DisplayTheremin", out var DisplayTheremin);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("DisplayTheremin", out var DisplayTheremin);
 
             Ivyl.SetupItemDisplay(DisplayTheremin.asset);
             ItemDisplaySpec itemDisplay = new ItemDisplaySpec(Items.Theremin, DisplayTheremin.asset);
-            var idrs = Instance.itemDisplayRuleSets;
+            var idrs = instance.itemDisplayRuleSets;
             idrs["idrsCommando"].AddDisplayRule(itemDisplay, "Stomach", new Vector3(0.13491F, -0.05978F, -0.126F), new Vector3(285.9316F, 354.6909F, 343.4794F), new Vector3(1.05089F, 1.06357F, 1.05089F));
             idrs["idrsHuntress"].AddDisplayRule(itemDisplay, "Pelvis", new Vector3(0.14773F, 0.04592F, 0.14647F), new Vector3(55.92511F, 189.9159F, 157.5366F), new Vector3(1.06336F, 1.06336F, 1.06336F));
             idrs["idrsBandit2"].AddDisplayRule(itemDisplay, "Stomach", new Vector3(0.03759F, -0.13868F, -0.20006F), new Vector3(293.316F, 358.5328F, 352.6877F), new Vector3(1.16451F, 1.16451F, 1.16451F));

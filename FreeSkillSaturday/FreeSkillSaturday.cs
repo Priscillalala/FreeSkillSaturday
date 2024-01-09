@@ -12,10 +12,10 @@ global using IvyLibrary;
 global using R2API;
 global using RoR2;
 global using RoR2.ContentManagement;
-using System.IO;
+
+using ShaderSwapper;
 using System.Security;
 using System.Security.Permissions;
-using RoR2.ExpansionManagement;
 
 [module: UnverifiableCode]
 #pragma warning disable
@@ -30,9 +30,9 @@ namespace FreeItemFriday;
 [BepInDependency(DamageAPI.PluginGUID)]
 [BepInDependency(DotAPI.PluginGUID)]
 [BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "2.0.0")]
-public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
+public partial class FreeSkillSaturday : BaseContentPlugin
 {
-    public static ExpansionDef Expansion;
+    protected static FreeSkillSaturday instance;
 
     private AssetBundleCreateRequest freeitemfridayassets;
     protected IDictionary<string, ItemDisplayRuleSet> itemDisplayRuleSets;
@@ -41,12 +41,29 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
 
     public void Awake()
     {
+        instance = this;
+
         freeitemfridayassets = this.LoadAssetBundleAsync("freeitemfridayassets");
+
         loadStaticContentAsync += LoadStaticContentAsync;
         finalizeAsync += FinalizeAsync;
+
+        GameObject freeSkillSaturday = new GameObject("FreeSkillSaturday", new[]
+        {
+            typeof(Entropy),
+            typeof(GodlessEye),
+            typeof(FlintArrowhead),
+            typeof(Theremin),
+            typeof(Disembowel),
+            typeof(PulseGrenade),
+            typeof(Reboot),
+            typeof(Venom),
+            typeof(XQRChip),
+        });
+        DontDestroyOnLoad(freeSkillSaturday);
     }
 
-    private new IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+    private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
     {
         if (!freeitemfridayassets.isDone)
         {
@@ -60,14 +77,14 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday>
 
         Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly);
 
-        IEnumerable keys = new[] { "ContentPack:RoR2.BaseContent", "ContentPack:RoR2.DLC1" };
-        yield return Ivyl.LoadAddressableAssetsAsync<ItemDisplayRuleSet>(keys, out var idrs);
+        yield return Ivyl.LoadAddressableAssetsAsync<ItemDisplayRuleSet>(new[] { "ContentPack:RoR2.BaseContent", "ContentPack:RoR2.DLC1" }, out var idrs);
         itemDisplayRuleSets = idrs.Result;
     }
 
-    private new IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
+    private IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
     {
+        yield return freeitemfridayassets.assetBundle?.UpgradeStubbedShadersAsync();
+
         freeitemfridayassets.assetBundle?.Unload(false);
-        yield break;
     }
 }

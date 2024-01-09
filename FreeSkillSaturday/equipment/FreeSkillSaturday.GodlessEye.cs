@@ -14,7 +14,7 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
@@ -24,7 +24,7 @@ partial class FreeSkillSaturday
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSStarsLink.mat", out var matMSStarsLink);
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Common/VFX/matJellyfishLightning.mat", out var matJellyfishLightning);
 
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupDeathEye", out var PickupDeathEye);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("PickupDeathEye", out var PickupDeathEye);
             GameObject pickupModelPrefab = PickupDeathEye.asset;
 
             MeshRenderer modelRenderer = pickupModelPrefab.transform.Find("mdlDeathEye").GetComponent<MeshRenderer>();
@@ -39,9 +39,9 @@ partial class FreeSkillSaturday
             pickupModelPrefab.transform.Find("EyeBallFX/LongLifeNoiseTrails, Bright").GetComponent<ParticleSystemRenderer>().trailMaterial = matMSStarsLink.Result;
             pickupModelPrefab.transform.Find("EyeBallFX/Lightning").GetComponent<ParticleSystemRenderer>().sharedMaterial = matJellyfishLightning.Result;
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeIcon", out var texDeathEyeIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeIcon", out var texDeathEyeIcon);
 
-            Equipment.DeathEye = Instance.Content.DefineEquipment("DeathEye")
+            Equipment.DeathEye = instance.Content.DefineEquipment("DeathEye")
                 .SetIconSprite(texDeathEyeIcon.asset)
                 .SetEquipmentType(EquipmentType.Lunar)
                 .SetCooldown(60f)
@@ -50,9 +50,9 @@ partial class FreeSkillSaturday
                 .SetPickupModelPrefab(pickupModelPrefab, new ModelPanelParams(Vector3.zero, 3, 10))
                 .SetActivationFunction(FireDeathEye);
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeConsumedIcon", out var texDeathEyeConsumedIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texDeathEyeConsumedIcon", out var texDeathEyeConsumedIcon);
 
-            Equipment.DeathEyeConsumed = Instance.Content.DefineEquipment("DeathEyeConsumed")
+            Equipment.DeathEyeConsumed = instance.Content.DefineEquipment("DeathEyeConsumed")
                 .SetIconSprite(texDeathEyeConsumedIcon.asset)
                 .SetEquipmentType(EquipmentType.Lunar)
                 .SetAvailability(EquipmentAvailability.Never)
@@ -60,9 +60,9 @@ partial class FreeSkillSaturday
                 .SetPickupModelPrefab(consumedPickupModelPrefab);
             Equipment.DeathEyeConsumed.colorIndex = ColorCatalog.ColorIndex.Unaffordable;
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCompleteMultiplayerUnknownEndingIcon", out var texCompleteMultiplayerUnknownEndingIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texCompleteMultiplayerUnknownEndingIcon", out var texCompleteMultiplayerUnknownEndingIcon);
 
-            Achievements.CompleteMultiplayerUnknownEnding = Instance.Content.DefineAchievementForEquipment("CompleteMultiplayerUnknownEnding", Equipment.DeathEye)
+            Achievements.CompleteMultiplayerUnknownEnding = instance.Content.DefineAchievementForEquipment("CompleteMultiplayerUnknownEnding", Equipment.DeathEye)
                 .SetIconSprite(texCompleteMultiplayerUnknownEndingIcon.asset)
                 .SetTrackerTypes(typeof(CompleteMultiplayerUnknownEndingAchievement), typeof(CompleteMultiplayerUnknownEndingAchievement.ServerAchievement));
             // Match achievement identifiers from FreeItemFriday
@@ -83,7 +83,7 @@ partial class FreeSkillSaturday
 
             static void AddDisplayRules(ItemDisplaySpec itemDisplay)
             {
-                var idrs = Instance.itemDisplayRuleSets;
+                var idrs = instance.itemDisplayRuleSets;
                 idrs["idrsCommando"].AddDisplayRule(itemDisplay, "Head", new Vector3(0.001F, 0.545F, -0.061F), new Vector3(0F, 90F, 0F), new Vector3(0.069F, 0.069F, 0.069F));
                 idrs["idrsHuntress"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.002F, 0.486F, -0.158F), new Vector3(359.97F, 89.949F, 345.155F), new Vector3(0.067F, 0.067F, 0.067F));
                 idrs["idrsBandit2"].AddDisplayRule(itemDisplay, "Head", new Vector3(-0.001F, 0.367F, -0.002F), new Vector3(0F, 89.995F, 0.001F), new Vector3(0.066F, 0.066F, 0.066F));
@@ -117,7 +117,7 @@ partial class FreeSkillSaturday
             DelayedDeathHandler.AddComponent<DestroyOnTimer>().duration = duration;
             DestroyImmediate(DelayedDeathHandler.transform.Find("LongLifeNoiseTrails, Bright").gameObject);
             DestroyImmediate(DelayedDeathHandler.transform.Find("PersistentLight").gameObject);
-            Instance.Content.networkedObjectPrefabs.Add(DelayedDeathHandler);
+            instance.Content.networkedObjectPrefabs.Add(DelayedDeathHandler);
         }
 
         public bool FireDeathEye(EquipmentSlot equipmentSlot)

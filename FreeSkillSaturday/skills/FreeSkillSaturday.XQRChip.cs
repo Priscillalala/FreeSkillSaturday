@@ -20,21 +20,23 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerBouncingBulletsIcon", out var texRailgunnerBouncingBulletsIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerBouncingBulletsIcon", out var texRailgunnerBouncingBulletsIcon);
 
-            Skills.RailgunnerPassiveBouncingBullets = Instance.Content.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
+            Skills.RailgunnerPassiveBouncingBullets = instance.Content.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
                 .SetIconSprite(texRailgunnerBouncingBulletsIcon.asset);
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerPassiveFamily.asset", out var RailgunnerPassiveFamily);
 
-            Achievements.RailgunnerEliteSniper = Instance.Content.DefineAchievementForSkill("RailgunnerEliteSniper", ref RailgunnerPassiveFamily.Result.AddSkill(Skills.RailgunnerPassiveBouncingBullets))
+            Achievements.RailgunnerEliteSniper = instance.Content.DefineAchievementForSkill("RailgunnerEliteSniper", ref RailgunnerPassiveFamily.Result.AddSkill(Skills.RailgunnerPassiveBouncingBullets))
                 .SetIconSprite(Skills.RailgunnerPassiveBouncingBullets.icon)
                 .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
+            // Match achievement identifiers from 1.6.1
+            Achievements.RailgunnerEliteSniper.AchievementDef.identifier = "FSS_RailgunnerEliteSniper";
 
             yield return CreateSmartTargetVisualizerAsync();
         }

@@ -18,33 +18,33 @@ partial class FreeSkillSaturday
         {
             StrongerBurn = ColorsAPI.RegisterDamageColor(new Color32(244, 113, 80, 255));
 
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArrowheadIcon", out var texArrowheadIcon);
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupArrowhead", out var PickupArrowhead);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texArrowheadIcon", out var texArrowheadIcon);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("PickupArrowhead", out var PickupArrowhead);
 
-            Items.Arrowhead = Instance.Content.DefineItem("Arrowhead")
+            Items.Arrowhead = instance.Content.DefineItem("Arrowhead")
                 .SetIconSprite(texArrowheadIcon.asset)
                 .SetItemTier(ItemTier.Tier1)
                 .SetPickupModelPrefab(PickupArrowhead.asset, new ModelPanelParams(Vector3.zero, 1, 8))
                 .SetTags(ItemTag.Damage);
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texBurnMultipleEnemiesIcon", out var texBurnMultipleEnemiesIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texBurnMultipleEnemiesIcon", out var texBurnMultipleEnemiesIcon);
 
-            Achievements.BurnMultipleEnemies = Instance.Content.DefineAchievementForItem("BurnMultipleEnemies", Items.Arrowhead)
+            Achievements.BurnMultipleEnemies = instance.Content.DefineAchievementForItem("BurnMultipleEnemies", Items.Arrowhead)
                 .SetIconSprite(texBurnMultipleEnemiesIcon.asset)
                 .SetTrackerTypes(typeof(BurnMultipleEnemiesAchievement), typeof(BurnMultipleEnemiesAchievement.ServerAchievement));
             // Match achievement identifiers from FreeItemFriday
             Achievements.BurnMultipleEnemies.AchievementDef.identifier = "BurnMultipleEnemies";
 
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("DisplayArrowhead", out var DisplayArrowhead);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("DisplayArrowhead", out var DisplayArrowhead);
 
             Ivyl.SetupItemDisplay(DisplayArrowhead.asset);
             ItemDisplaySpec itemDisplay = new ItemDisplaySpec(Items.Arrowhead, DisplayArrowhead.asset);
-            var idrs = Instance.itemDisplayRuleSets;
+            var idrs = instance.itemDisplayRuleSets;
             idrs["idrsCommando"].AddDisplayRule(itemDisplay, "Pelvis", new Vector3(-0.162F, -0.09F, -0.053F), new Vector3(7.522F, 244.056F, 358.818F), new Vector3(0.469F, 0.469F, 0.469F));
             idrs["idrsHuntress"].AddDisplayRule(itemDisplay, "Arrow", new Vector3(0.343F, 0F, 0F), new Vector3(87.415F, 144.866F, 55.112F), new Vector3(0.388F, 0.388F, 0.388F));
             idrs["idrsBandit2"].AddDisplayRule(itemDisplay, "Chest", new Vector3(0.153F, -0.144F, 0.066F), new Vector3(355.538F, 89.398F, 170.59F), new Vector3(0.507F, 0.507F, 0.507F));
@@ -95,7 +95,7 @@ partial class FreeSkillSaturday
                     }
                 }
             }
-            Instance.Content.AddEffectPrefab(ImpactArrowhead);
+            instance.Content.AddEffectPrefab(ImpactArrowhead);
         }
 
         public IEnumerator CreateImpactArrowheadStrongerAsync()
@@ -104,7 +104,7 @@ partial class FreeSkillSaturday
 
             GameObject impactArrowheadStronger = Ivyl.ClonePrefab(ImpactArrowhead, "ImpactArrowHeadStronger");
             impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = matOmniHitspark3Gasoline.Result;
-            Instance.Content.AddEffectPrefab(impactArrowheadStronger);
+            instance.Content.AddEffectPrefab(impactArrowheadStronger);
         }
 
         public void OnEnable()

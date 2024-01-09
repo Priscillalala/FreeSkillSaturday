@@ -25,15 +25,15 @@ partial class FreeSkillSaturday
         {
             Shock2s = DamageAPI.ReserveDamageType();
 
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerElectricGrenadeIcon", out var texRailgunnerElectricGrenadeIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerElectricGrenadeIcon", out var texRailgunnerElectricGrenadeIcon);
             yield return Ivyl.LoadAddressableAssetAsync<RailgunSkillDef>("RoR2/DLC1/Railgunner/RailgunnerBodyFirePistol.asset", out var RailgunnerBodyFirePistol);
 
-            Skills.RailgunnerElectricGrenade = Instance.Content.DefineSkill<RailgunSkillDef>("RailgunnerElectricGrenade")
+            Skills.RailgunnerElectricGrenade = instance.Content.DefineSkill<RailgunSkillDef>("RailgunnerElectricGrenade")
                 .SetIconSprite(texRailgunnerElectricGrenadeIcon.asset)
                 .SetActivationState(typeof(EntityStates.Railgunner.Weapon.FireElectricGrenade), "Weapon")
                 .SetInterruptPriority(EntityStates.InterruptPriority.Any)
@@ -47,9 +47,11 @@ partial class FreeSkillSaturday
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerBodyPrimaryFamily.asset", out var RailgunnerBodyPrimaryFamily);
 
-            Achievements.RailgunnerHipster = Instance.Content.DefineAchievementForSkill("RailgunnerHipster", ref RailgunnerBodyPrimaryFamily.Result.AddSkill(Skills.RailgunnerElectricGrenade))
+            Achievements.RailgunnerHipster = instance.Content.DefineAchievementForSkill("RailgunnerHipster", ref RailgunnerBodyPrimaryFamily.Result.AddSkill(Skills.RailgunnerElectricGrenade))
                 .SetIconSprite(Skills.RailgunnerElectricGrenade.icon)
                 .SetTrackerTypes(typeof(RailgunnerHipsterAchievement), null);
+            // Match achievement identifiers from 1.6.1
+            Achievements.RailgunnerHipster.AchievementDef.identifier = "FSS_RailgunnerHipster";
 
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCrosshair.prefab", out var RailgunnerCrosshair);
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerCryochargeCrosshair.prefab", out var RailgunnerCryochargeCrosshair);
@@ -86,7 +88,7 @@ partial class FreeSkillSaturday
             {
                 projectileImpactExplosion.blastRadius = 5f;
                 projectileImpactExplosion.lifetimeAfterImpact = 0.15f;
-                projectileImpactExplosion.lifetimeExpiredSound = Instance.Content.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
+                projectileImpactExplosion.lifetimeExpiredSound = instance.Content.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
                 projectileImpactExplosion.offsetForLifetimeExpiredSound = 0.05f;
                 projectileImpactExplosion.impactEffect = GrenadeExplosionEffect;
             }
@@ -115,12 +117,12 @@ partial class FreeSkillSaturday
             yield return CreateGrenadeGhostAsync();
 
             GrenadeProjectile.GetComponent<ProjectileController>().ghostPrefab = GrenadeGhost;
-            Instance.Content.projectilePrefabs.Add(GrenadeProjectile);
+            instance.Content.projectilePrefabs.Add(GrenadeProjectile);
 
             GameObject grenadeGhostReskin = Ivyl.ClonePrefab(GrenadeGhost, "RailgunnerElectricGrenadeGhostReskin");
             if (grenadeGhostReskin.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenadeReskin) && mdlEngiGrenadeReskin.TryGetComponent(out MeshRenderer meshRendererReskin))
             {
-                yield return Instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenadeAlt", out var texRailgunnerElectricGrenadeAlt);
+                yield return instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenadeAlt", out var texRailgunnerElectricGrenadeAlt);
 
                 Material matRailgunnerElectricGrenadeAlt = new Material(meshRendererReskin.sharedMaterial);
                 matRailgunnerElectricGrenadeAlt.SetTexture("_MainTex", texRailgunnerElectricGrenadeAlt.asset);
@@ -143,12 +145,12 @@ partial class FreeSkillSaturday
             GrenadeExplosionEffect = Ivyl.ClonePrefab(CaptainTazerSupplyDropNova.Result, "RailgunnerElectricGrenadeExplosion");
             GrenadeExplosionEffect.GetComponent<EffectComponent>().soundName = "Play_roboBall_attack1_explode";
             GrenadeExplosionEffect.GetComponent<VFXAttributes>().vfxPriority = VFXAttributes.VFXPriority.Always;
-            Instance.Content.AddEffectPrefab(GrenadeExplosionEffect);
+            instance.Content.AddEffectPrefab(GrenadeExplosionEffect);
         }
 
         public IEnumerator CreateGrenadeGhostAsync()
         {
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("\"RoR2/Base/Engi/EngiGrenadeGhost.prefab", out var EngiGrenadeGhost);
+            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiGrenadeGhost.prefab", out var EngiGrenadeGhost);
 
             GrenadeGhost = Ivyl.ClonePrefab(EngiGrenadeGhost.Result, "RailgunnerElectricGrenadeGhost");
             if (GrenadeGhost.transform.TryFind("mdlEngiGrenade", out Transform mdlEngiGrenade))
@@ -156,7 +158,7 @@ partial class FreeSkillSaturday
                 mdlEngiGrenade.localScale = new Vector3(0.3f, 0.3f, 0.5f);
                 if (mdlEngiGrenade.TryGetComponent(out MeshRenderer meshRenderer))
                 {
-                    yield return Instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenade", out var texRailgunnerElectricGrenade);
+                    yield return instance.Assets.LoadAssetAsync<Texture>("texRailgunnerElectricGrenade", out var texRailgunnerElectricGrenade);
 
                     Material matRailgunnerElectricGrenade = new Material(meshRenderer.sharedMaterial);
                     matRailgunnerElectricGrenade.SetColor("_EmColor", new Color32(55, 188, 255, 255));
@@ -192,7 +194,7 @@ partial class FreeSkillSaturday
                     return duration;
                 });
             }
-            else Instance.Logger.LogError($"{nameof(PulseGrenade)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
+            else instance.Logger.LogError($"{nameof(PulseGrenade)}.{nameof(SetStateOnHurt_OnTakeDamageServer)} IL hook failed!");
         }
 
         public class SetupRailgunnerCrosshair : MonoBehaviour

@@ -19,32 +19,34 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Buffs.Toxin = Instance.Content.DefineBuff("Toxin");
-            ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison);
+            Buffs.Toxin = instance.Content.DefineBuff("Toxin");
+            ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Buffs.Toxin);
 
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCrocoPassiveVenomIcon", out var texCrocoPassiveVenomIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoPassiveVenomIcon", out var texCrocoPassiveVenomIcon);
 
-            Skills.CrocoPassiveToxin = Instance.Content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
+            Skills.CrocoPassiveToxin = instance.Content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
                 .SetIconSprite(texCrocoPassiveVenomIcon.asset)
                 .SetKeywordTokens("FSS_KEYWORD_VENOM");
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset", out var CrocoBodyPassiveFamily);
 
-            Achievements.CrocoKillBossCloaked = Instance.Content.DefineAchievementForSkill("CrocoKillBossCloaked", ref CrocoBodyPassiveFamily.Result.AddSkill(Skills.CrocoPassiveToxin))
+            Achievements.CrocoKillBossCloaked = instance.Content.DefineAchievementForSkill("CrocoKillBossCloaked", ref CrocoBodyPassiveFamily.Result.AddSkill(Skills.CrocoPassiveToxin))
                 .SetIconSprite(Skills.CrocoPassiveToxin.icon)
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
+            // Match achievement identifiers from 1.6.1
+            Achievements.CrocoKillBossCloaked.AchievementDef.identifier = "FSS_CrocoKillBossCloaked";
 
             yield return Ivyl.LoadAddressableAssetAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif", out var texBuffBleedingIcon);
 
             Buffs.Toxin.SetIconSprite(texBuffBleedingIcon.Result, new Color32(156, 123, 255, 255));
 
-            Buffs.ToxinSlow = Instance.Content.DefineBuff("ToxinSlow")
+            Buffs.ToxinSlow = instance.Content.DefineBuff("ToxinSlow")
                 .SetFlags(BuffFlags.Stackable | BuffFlags.Hidden);
 
             yield return CreateToxicBurnEffectParamsAsync();
@@ -134,7 +136,7 @@ partial class FreeSkillSaturday
                 c.Emit(OpCodes.Ldarg, 0);
                 c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
             }
-            else Instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
+            else instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
         }
 
         private void FixWeaponSlamPriorityDuration(ILContext il)
@@ -145,7 +147,7 @@ partial class FreeSkillSaturday
                 c.Emit(OpCodes.Ldarg, 0);
                 c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
             }
-            else Instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamPriorityDuration)} IL hook failed!");
+            else instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamPriorityDuration)} IL hook failed!");
         }
 
         public class ToxinBuffBehaviour : BaseBuffBodyBehavior, IOnTakeDamageServerReceiver

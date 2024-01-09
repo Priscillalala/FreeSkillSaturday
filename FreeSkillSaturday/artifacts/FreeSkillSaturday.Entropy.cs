@@ -23,7 +23,7 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
@@ -33,19 +33,19 @@ partial class FreeSkillSaturday
                 (ArtifactCompound.Square, ArtifactCompound.Square, ArtifactCompound.Square),
                 (ArtifactCompound.Triangle, ArtifactCompound.Diamond, ArtifactCompound.Triangle));
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainEnabled", out var texArtifactSlipperyTerrainEnabled);
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainDisabled", out var texArtifactSlipperyTerrainDisabled);
-            yield return Instance.Assets.LoadAssetAsync<GameObject>("PickupSlipperyTerrain", out var PickupSlipperyTerrain);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainEnabled", out var texArtifactSlipperyTerrainEnabled);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainDisabled", out var texArtifactSlipperyTerrainDisabled);
+            yield return instance.Assets.LoadAssetAsync<GameObject>("PickupSlipperyTerrain", out var PickupSlipperyTerrain);
 
-            Artifacts.SlipperyTerrain = Instance.Content.DefineArtifact("SlipperyTerrain")
+            Artifacts.SlipperyTerrain = instance.Content.DefineArtifact("SlipperyTerrain")
                 .SetIconSprites(texArtifactSlipperyTerrainEnabled.asset, texArtifactSlipperyTerrainDisabled.asset)
                 .SetPickupModelPrefab(PickupSlipperyTerrain.asset)
                 .SetArtifactCode(artifactCode)
                 .SetEnabledActions(OnArtifactEnabled, OnArtifactDisabled);
 
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texObtainArtifactSlipperyTerrainIcon", out var texObtainArtifactSlipperyTerrainIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texObtainArtifactSlipperyTerrainIcon", out var texObtainArtifactSlipperyTerrainIcon);
 
-            Achievements.ObtainArtifactSlipperyTerrain = Instance.Content.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Artifacts.SlipperyTerrain)
+            Achievements.ObtainArtifactSlipperyTerrain = instance.Content.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Artifacts.SlipperyTerrain)
                 .SetIconSprite(texObtainArtifactSlipperyTerrainIcon.asset)
                 .SetTrackerTypes(typeof(ObtainArtifactSlipperyTerrainAchievement));
             // Match achievement identifiers from FreeItemFriday
@@ -65,7 +65,7 @@ partial class FreeSkillSaturday
                 activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
             }
 
-            yield return Instance.Assets.LoadAssetAsync<PhysicMaterial>("physmatSlidingProjectile", out var physmatSlidingProjectile);
+            yield return instance.Assets.LoadAssetAsync<PhysicMaterial>("physmatSlidingProjectile", out var physmatSlidingProjectile);
 
             SlidingProjectile = physmatSlidingProjectile.asset;
 
@@ -77,7 +77,9 @@ partial class FreeSkillSaturday
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var ArtifactFormulaDisplay);
 
             SlipperyTerrainFormulaDisplay = Ivyl.ClonePrefab(ArtifactFormulaDisplay.Result, "SlipperyTerrainFormulaDisplay");
-            artifactCode.CopyToFormulaDisplayAsync(SlipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>());
+
+            yield return Ivyl.SetupArtifactFormulaDisplayAsync(SlipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>(), artifactCode);
+
             foreach (Decal decal in SlipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
             {
                 decal.Fade = 0.15f;
@@ -264,7 +266,7 @@ partial class FreeSkillSaturday
                     return new Vector3(motor.velocity.x + newVelocity.x * adjustedHorizontalMultiplier, newVelocity.y, motor.velocity.z + newVelocity.z * adjustedHorizontalMultiplier);
                 });
             }
-            else Instance.Logger.LogError($"{nameof(Entropy)}.{nameof(GenericCharacterMain_ApplyJumpVelocity)} IL hook failed!");
+            else instance.Logger.LogError($"{nameof(Entropy)}.{nameof(GenericCharacterMain_ApplyJumpVelocity)} IL hook failed!");
         }
 
         private void CharacterMotor_PreMove(ILContext il)
@@ -308,7 +310,7 @@ partial class FreeSkillSaturday
                 });
                 c.Emit(OpCodes.Stloc, locAcclerationIndex);
             }
-            else Instance.Logger.LogError($"{nameof(Entropy)}.{nameof(CharacterMotor_PreMove)} IL hook failed!");
+            else instance.Logger.LogError($"{nameof(Entropy)}.{nameof(CharacterMotor_PreMove)} IL hook failed!");
         }
 
         public class FreezeRotationWhenArtifactEnabled : MonoBehaviour

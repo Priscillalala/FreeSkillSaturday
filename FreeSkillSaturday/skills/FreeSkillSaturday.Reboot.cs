@@ -15,14 +15,14 @@ partial class FreeSkillSaturday
 
         public void Awake()
         {
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texToolbotRebootIcon", out var texToolbotRebootIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texToolbotRebootIcon", out var texToolbotRebootIcon);
 
-            Skills.ToolbotReboot = Instance.Content.DefineSkill<SkillDef>("ToolbotReboot")
+            Skills.ToolbotReboot = instance.Content.DefineSkill<SkillDef>("ToolbotReboot")
                 .SetIconSprite(texToolbotRebootIcon.asset)
                 .SetActivationState(typeof(EntityStates.Toolbot.Reboot), "Body")
                 .SetCooldown(60f)
@@ -31,10 +31,12 @@ partial class FreeSkillSaturday
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Toolbot/ToolbotBodyUtilityFamily.asset", out var ToolbotBodyUtilityFamily);
 
-            Achievements.ToolbotOverclocked = Instance.Content.DefineAchievementForSkill("ToolbotOverclocked", ref ToolbotBodyUtilityFamily.Result.AddSkill(Skills.ToolbotReboot))
+            Achievements.ToolbotOverclocked = instance.Content.DefineAchievementForSkill("ToolbotOverclocked", ref ToolbotBodyUtilityFamily.Result.AddSkill(Skills.ToolbotReboot))
                 .SetIconSprite(Skills.ToolbotReboot.icon)
                 .SetPrerequisiteAchievement("RepeatFirstTeleporter")
                 .SetTrackerTypes(typeof(ToolbotOverclockedAchievement), null);
+            // Match achievement identifiers from 1.6.1
+            Achievements.ToolbotOverclocked.AchievementDef.identifier = "FSS_ToolbotOverclocked";
 
             yield return CreateRebootOverlayAsync();
             yield return CreateVentEffectAsync();
@@ -43,7 +45,7 @@ partial class FreeSkillSaturday
         public IEnumerator CreateRebootOverlayAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerOfflineUI.prefab", out var RailgunnerOfflineUI);
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texRebootUIGear", out var texRebootUIGear);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texRebootUIGear", out var texRebootUIGear);
 
             RebootOverlay = Ivyl.ClonePrefab(RailgunnerOfflineUI.Result, "RebootOverlay");
             Transform barContainer = RebootOverlay.transform.Find("BarContainer");
@@ -74,7 +76,7 @@ partial class FreeSkillSaturday
             vFXAttributes.vfxIntensity = VFXAttributes.VFXIntensity.Low;
             vFXAttributes.vfxPriority = VFXAttributes.VFXPriority.Medium;
 
-            Instance.Content.AddEffectPrefab(VentEffect);
+            instance.Content.AddEffectPrefab(VentEffect);
         }
     }
 }

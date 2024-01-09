@@ -17,14 +17,14 @@ partial class FreeSkillSaturday
         {
             SuperBleedOnHit = DamageAPI.ReserveDamageType();
 
-            Instance.loadStaticContentAsync += LoadStaticContentAsync;
+            instance.loadStaticContentAsync += LoadStaticContentAsync;
         }
 
         private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Instance.Assets.LoadAssetAsync<Sprite>("texCrocoSuperBiteIcon", out var texCrocoSuperBiteIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoSuperBiteIcon", out var texCrocoSuperBiteIcon);
 
-            Skills.CrocoSuperBite = Instance.Content.DefineSkill<SkillDef>("CrocoSuperBite")
+            Skills.CrocoSuperBite = instance.Content.DefineSkill<SkillDef>("CrocoSuperBite")
                 .SetIconSprite(texCrocoSuperBiteIcon.asset)
                 .SetActivationState(typeof(EntityStates.Croco.SuperBite), "Weapon")
                 .SetCooldown(10f)
@@ -33,10 +33,12 @@ partial class FreeSkillSaturday
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset", out var CrocoBodySpecialFamily);
 
-            Achievements.CrocoBeatArenaFast = Instance.Content.DefineAchievementForSkill("CrocoBeatArenaFast", ref CrocoBodySpecialFamily.Result.AddSkill(Skills.CrocoSuperBite))
+            Achievements.CrocoBeatArenaFast = instance.Content.DefineAchievementForSkill("CrocoBeatArenaFast", ref CrocoBodySpecialFamily.Result.AddSkill(Skills.CrocoSuperBite))
                 .SetIconSprite(Skills.CrocoSuperBite.icon)
                 .SetPrerequisiteAchievement("BeatArena")
                 .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
+            // Match achievement identifiers from 1.6.1
+            Achievements.CrocoBeatArenaFast.AchievementDef.identifier = "FSS_CrocoBeatArenaFast";
 
             yield return CreateCrocoSuperBiteEffectAsync();
         }

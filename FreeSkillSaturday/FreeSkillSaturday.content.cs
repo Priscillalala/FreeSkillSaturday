@@ -1,10 +1,13 @@
 ﻿using JetBrains.Annotations;
+using RoR2.ExpansionManagement;
 using RoR2.Skills;
 
 namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
+    public static ExpansionDef Expansion;
+
     public static class Items
     {
         [CanBeNull] public static ItemDef Theremin;
