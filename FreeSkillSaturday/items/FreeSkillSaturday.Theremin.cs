@@ -1,20 +1,34 @@
-﻿using RoR2.Items;
+﻿using IvyLibrary;
+using RoR2.Items;
 
 namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class Theremin : MonoBehaviour
+    public static class Theremin
     {
+        public static bool enabled = true;
         public static float attackSpeedBonus = 0.45f;
-        public static float attackSpeedBonusPerStack = 0.35f;
+        public static float attackSpeedBonusPerStack = 0.45f;
 
-        public void Awake()
+        public static void Awake()
         {
+            instance.Logger.LogInfo("Theremin Awake!");
+            const string SECTION = "Theremin";
+            instance.ItemsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.ItemsConfig.Bind(ref attackSpeedBonus, SECTION, "Attack Speed Bonus");
+            instance.ItemsConfig.Bind(ref attackSpeedBonusPerStack, SECTION, "Attack Speed Bonus Per Stack");
+            if (!enabled)
+            {
+                //Destroy(this);
+                return;
+            }
+            instance.Logger.LogInfo("Theremin Awake: enabled!");
             instance.loadStaticContentAsync += LoadStaticContentAsync;
+            On.RoR2.MusicController.UpdateTeleporterParameters += MusicController_UpdateTeleporterParameters;
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texThereminIcon", out var texThereminIcon);
             yield return instance.Assets.LoadAssetAsync<GameObject>("PickupTheremin", out var PickupTheremin);
@@ -48,17 +62,7 @@ partial class FreeSkillSaturday
             idrs["idrsScav"].AddDisplayRule(itemDisplay, "Backpack", new Vector3(-11.52265F, 9.98327F, 1.99621F), new Vector3(284.7374F, 89.41682F, 348.9175F), new Vector3(21.38155F, 21.38155F, 21.38155F));
         }
 
-        public void OnEnable()
-        {
-            On.RoR2.MusicController.UpdateTeleporterParameters += MusicController_UpdateTeleporterParameters;
-        }
-
-        public void OnDisable()
-        {
-            On.RoR2.MusicController.UpdateTeleporterParameters -= MusicController_UpdateTeleporterParameters;
-        }
-
-        private void MusicController_UpdateTeleporterParameters(On.RoR2.MusicController.orig_UpdateTeleporterParameters orig, MusicController self, TeleporterInteraction teleporter, Transform cameraTransform, CharacterBody targetBody)
+        private static void MusicController_UpdateTeleporterParameters(On.RoR2.MusicController.orig_UpdateTeleporterParameters orig, MusicController self, TeleporterInteraction teleporter, Transform cameraTransform, CharacterBody targetBody)
         {
             orig(self, teleporter, cameraTransform, targetBody);
             self.rtpcTeleporterProximityValue.value = Util.Remap(self.rtpcTeleporterProximityValue.value, 0f, 10000f, 5000f, 10000f);

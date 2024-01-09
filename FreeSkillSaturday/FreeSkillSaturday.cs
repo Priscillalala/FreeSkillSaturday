@@ -16,6 +16,7 @@ global using RoR2.ContentManagement;
 using ShaderSwapper;
 using System.Security;
 using System.Security.Permissions;
+using BepInEx.Configuration;
 
 [module: UnverifiableCode]
 #pragma warning disable
@@ -38,12 +39,23 @@ public partial class FreeSkillSaturday : BaseContentPlugin
     protected IDictionary<string, ItemDisplayRuleSet> itemDisplayRuleSets;
 
     public AssetBundle Assets { get; private set; }
+    public ConfigFile ArtifactsConfig { get; private set; }
+    public ConfigFile EquipmentConfig { get; private set; }
+    public ConfigFile ItemsConfig { get; private set; }
+    public ConfigFile SkillsConfig { get; private set; }
+
+    protected const string CONTENT_ENABLED_FORMAT = "Enable {0}?";
 
     public void Awake()
     {
         instance = this;
 
         freeitemfridayassets = this.LoadAssetBundleAsync("freeitemfridayassets");
+
+        ArtifactsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Artifacts.cfg"), false);
+        EquipmentConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Equipment.cfg"), false);
+        ItemsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Items.cfg"), false);
+        SkillsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Skills.cfg"), false);
 
         loadStaticContentAsync += LoadStaticContentAsync;
         finalizeAsync += FinalizeAsync;
@@ -53,7 +65,7 @@ public partial class FreeSkillSaturday : BaseContentPlugin
             typeof(Entropy),
             typeof(GodlessEye),
             typeof(FlintArrowhead),
-            typeof(Theremin),
+            //typeof(Theremin),
             typeof(Disembowel),
             typeof(PulseGrenade),
             typeof(Reboot),
@@ -61,6 +73,7 @@ public partial class FreeSkillSaturday : BaseContentPlugin
             typeof(XQRChip),
         });
         DontDestroyOnLoad(freeSkillSaturday);
+        Theremin.Awake();
     }
 
     private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
