@@ -4,20 +4,29 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class GodlessEye : MonoBehaviour
+    public static class GodlessEye
     {
+        public static bool enabled = true;
         public static float range = 200f;
         public static float duration = 2f;
         public static int maxConsecutiveEnemies = 10;
 
         public static GameObject DelayedDeathHandler { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+            const string SECTION = "Godless Eye";
+            instance.EquipmentConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.EquipmentConfig.Bind(ref range, SECTION, "Range");
+            instance.EquipmentConfig.Bind(ref duration, SECTION, "Duration");
+            instance.EquipmentConfig.Bind(ref maxConsecutiveEnemies, SECTION, "Maximum Consecutive Enemies");
+            if (enabled)
+            {
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskLightning.mat", out var matMSObeliskLightning);
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/mysteryspace/matMSObeliskHeart.mat", out var matMSObeliskHeart);
@@ -106,7 +115,7 @@ partial class FreeSkillSaturday
             yield return CreateDelayedDeathHandlerAsync();
         }
 
-        public IEnumerator CreateDelayedDeathHandlerAsync()
+        public static IEnumerator CreateDelayedDeathHandlerAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/mysteryspace/MSObelisk.prefab", out var MSObelisk);
 
@@ -120,7 +129,7 @@ partial class FreeSkillSaturday
             instance.Content.networkedObjectPrefabs.Add(DelayedDeathHandler);
         }
 
-        public bool FireDeathEye(EquipmentSlot equipmentSlot)
+        public static bool FireDeathEye(EquipmentSlot equipmentSlot)
         {
             if (!equipmentSlot.healthComponent || !equipmentSlot.healthComponent.alive)
             {

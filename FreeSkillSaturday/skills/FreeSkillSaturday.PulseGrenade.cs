@@ -10,8 +10,9 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class PulseGrenade : MonoBehaviour
+    public static class PulseGrenade
     {
+        public static bool enabled = true;
         public static float damageCoefficient = 3f;
         public static float duration = 1.3f;
         public static float firingDelay = 0.3f;
@@ -21,14 +22,23 @@ partial class FreeSkillSaturday
         public static GameObject GrenadeGhost { get; private set; }
         public static GameObject GrenadeProjectile { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            Shock2s = DamageAPI.ReserveDamageType();
+            const string SECTION = "Pulse Grenade";
+            instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.SkillsConfig.Bind(ref damageCoefficient, SECTION, "Damage Coefficient");
+            instance.SkillsConfig.Bind(ref duration, SECTION, "Duration");
+            instance.SkillsConfig.Bind(ref firingDelay, SECTION, "Firing Delay");
+            if (enabled)
+            {
+                Shock2s = DamageAPI.ReserveDamageType();
 
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                IL.RoR2.SetStateOnHurt.OnTakeDamageServer += SetStateOnHurt_OnTakeDamageServer;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerElectricGrenadeIcon", out var texRailgunnerElectricGrenadeIcon);
             yield return Ivyl.LoadAddressableAssetAsync<RailgunSkillDef>("RoR2/DLC1/Railgunner/RailgunnerBodyFirePistol.asset", out var RailgunnerBodyFirePistol);
@@ -72,7 +82,7 @@ partial class FreeSkillSaturday
             yield return CreateGrenadeProjectileAsync();
         }
 
-        public IEnumerator CreateGrenadeProjectileAsync()
+        public static IEnumerator CreateGrenadeProjectileAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiGrenadeProjectile.prefab", out var EngiGrenadeProjectile);
 
@@ -138,7 +148,7 @@ partial class FreeSkillSaturday
             });
         }
 
-        public IEnumerator CreateGrenadeExplosionEffectAsync()
+        public static IEnumerator CreateGrenadeExplosionEffectAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Captain/CaptainTazerSupplyDropNova.prefab", out var CaptainTazerSupplyDropNova);
 
@@ -148,7 +158,7 @@ partial class FreeSkillSaturday
             instance.Content.AddEffectPrefab(GrenadeExplosionEffect);
         }
 
-        public IEnumerator CreateGrenadeGhostAsync()
+        public static IEnumerator CreateGrenadeGhostAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiGrenadeGhost.prefab", out var EngiGrenadeGhost);
 
@@ -169,17 +179,7 @@ partial class FreeSkillSaturday
             }
         }
 
-        public void OnEnable()
-        {
-            IL.RoR2.SetStateOnHurt.OnTakeDamageServer += SetStateOnHurt_OnTakeDamageServer;
-        }
-
-        public void OnDisable()
-        {
-            IL.RoR2.SetStateOnHurt.OnTakeDamageServer -= SetStateOnHurt_OnTakeDamageServer;
-        }
-
-        private void SetStateOnHurt_OnTakeDamageServer(ILContext il)
+        private static void SetStateOnHurt_OnTakeDamageServer(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             if (c.TryGotoNext(MoveType.Before, x => x.MatchCallOrCallvirt<SetStateOnHurt>(nameof(SetStateOnHurt.SetShock))))

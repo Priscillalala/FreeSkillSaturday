@@ -6,21 +6,29 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class Disembowel : MonoBehaviour
+    public static class Disembowel
     {
+        public static bool enabled = true;
         public static float damageCoefficient = 2f;
 
         public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; }
         public static GameObject CrocoSuperBiteEffect { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            SuperBleedOnHit = DamageAPI.ReserveDamageType();
+            const string SECTION = "Disembowel";
+            instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.SkillsConfig.Bind(ref damageCoefficient, SECTION, "Damage Coefficient");
+            if (enabled)
+            {
+                SuperBleedOnHit = DamageAPI.ReserveDamageType();
 
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoSuperBiteIcon", out var texCrocoSuperBiteIcon);
 
@@ -43,7 +51,7 @@ partial class FreeSkillSaturday
             yield return CreateCrocoSuperBiteEffectAsync();
         }
 
-        public IEnumerator CreateCrocoSuperBiteEffectAsync()
+        public static IEnumerator CreateCrocoSuperBiteEffectAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab", out var CrocoBiteEffect);
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat", out var matCrocoGooSmall2);
@@ -75,17 +83,7 @@ partial class FreeSkillSaturday
             }
         }
 
-        public void OnEnable()
-        {
-            Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
-        }
-
-        public void OnDisable()
-        {
-            Events.GlobalEventManager.onHitEnemyAcceptedServer -= GlobalEventManager_onHitEnemyAcceptedServer;
-        }
-
-        private void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
+        private static void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
         {
             if (damageInfo.HasModdedDamageType(SuperBleedOnHit) && victim)
             {

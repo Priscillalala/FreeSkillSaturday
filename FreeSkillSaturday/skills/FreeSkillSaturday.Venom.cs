@@ -7,25 +7,42 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class Venom : MonoBehaviour
+    public static class Venom
     {
+        public static bool enabled = true;
         public static float damageCoefficientPerSecond = 1f;
         public static float duration = 5f;
         public static float speedReductionPerSecond = 0.05f;
-        [Tooltip("Fix attack speed scaling on Mithrix's hammer slam")]
         public static bool enableMithrixAttackSpeedFix = true;
 
         public static DotController.DotIndex ToxinDot { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            Buffs.Toxin = instance.Content.DefineBuff("Toxin");
-            ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Buffs.Toxin);
+            const string SECTION = "Venom";
+            instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.SkillsConfig.Bind(ref damageCoefficientPerSecond, SECTION, "Damage Coefficient Per Second");
+            instance.SkillsConfig.Bind(ref duration, SECTION, "Duration");
+            instance.SkillsConfig.Bind(ref speedReductionPerSecond, SECTION, "Speed Reduction Per Second");
+            instance.SkillsConfig.Bind(ref enableMithrixAttackSpeedFix, SECTION, "Enable Mithrix Attack Speed Fix", "Fix attack speed scaling on Mithrix's hammer slam");
+            if (enabled)
+            {
+                Buffs.Toxin = instance.Content.DefineBuff("Toxin");
+                ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Buffs.Toxin);
 
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
+                RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+                if (enableMithrixAttackSpeedFix)
+                {
+                    IL.EntityStates.BrotherMonster.WeaponSlam.OnEnter += FixWeaponSlamDuration;
+                    IL.EntityStates.BrotherMonster.WeaponSlam.FixedUpdate += FixWeaponSlamDuration;
+                    IL.EntityStates.BrotherMonster.WeaponSlam.GetMinimumInterruptPriority += FixWeaponSlamPriorityDuration;
+                }
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoPassiveVenomIcon", out var texCrocoPassiveVenomIcon);
 
@@ -52,7 +69,7 @@ partial class FreeSkillSaturday
             yield return CreateToxicBurnEffectParamsAsync();
         }
 
-        public IEnumerator CreateToxicBurnEffectParamsAsync()
+        public static IEnumerator CreateToxicBurnEffectParamsAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat", out var matPoisoned);
             yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png", out var texRampTritoneSmoothed);
@@ -71,31 +88,7 @@ partial class FreeSkillSaturday
             };
         }
 
-        public void OnEnable()
-        {
-            On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
-            RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
-            if (enableMithrixAttackSpeedFix)
-            {
-                IL.EntityStates.BrotherMonster.WeaponSlam.OnEnter += FixWeaponSlamDuration;
-                IL.EntityStates.BrotherMonster.WeaponSlam.FixedUpdate += FixWeaponSlamDuration;
-                IL.EntityStates.BrotherMonster.WeaponSlam.GetMinimumInterruptPriority += FixWeaponSlamPriorityDuration;
-            }
-        }
-
-        public void OnDisable()
-        {
-            On.RoR2.DotController.OnDotStackAddedServer -= DotController_OnDotStackAddedServer;
-            RecalculateStatsAPI.GetStatCoefficients -= RecalculateStatsAPI_GetStatCoefficients;
-            if (enableMithrixAttackSpeedFix)
-            {
-                IL.EntityStates.BrotherMonster.WeaponSlam.OnEnter -= FixWeaponSlamDuration;
-                IL.EntityStates.BrotherMonster.WeaponSlam.FixedUpdate -= FixWeaponSlamDuration;
-                IL.EntityStates.BrotherMonster.WeaponSlam.GetMinimumInterruptPriority -= FixWeaponSlamPriorityDuration;
-            }
-        }
-
-        private void DotController_OnDotStackAddedServer(On.RoR2.DotController.orig_OnDotStackAddedServer orig, DotController self, object _dotStack)
+        private static void DotController_OnDotStackAddedServer(On.RoR2.DotController.orig_OnDotStackAddedServer orig, DotController self, object _dotStack)
         {
             orig(self, _dotStack);
             if (_dotStack is DotController.DotStack dotStack && dotStack.dotIndex == ToxinDot)
@@ -114,7 +107,7 @@ partial class FreeSkillSaturday
             }
         }
 
-        private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
+        private static void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
             if (sender.HasBuff(Buffs.ToxinSlow, out int count))
             {
@@ -128,7 +121,7 @@ partial class FreeSkillSaturday
             }
         }
 
-        private void FixWeaponSlamDuration(ILContext il)
+        private static void FixWeaponSlamDuration(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             if (c.TryGotoNext(MoveType.After, x => x.MatchLdsfld<WeaponSlam>(nameof(WeaponSlam.duration))))
@@ -139,7 +132,7 @@ partial class FreeSkillSaturday
             else instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
         }
 
-        private void FixWeaponSlamPriorityDuration(ILContext il)
+        private static void FixWeaponSlamPriorityDuration(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             if (c.TryGotoNext(MoveType.After, x => x.MatchLdsfld<WeaponSlam>(nameof(WeaponSlam.durationBeforePriorityReduces))))

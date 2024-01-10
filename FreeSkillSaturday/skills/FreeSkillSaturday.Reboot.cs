@@ -6,19 +6,26 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class Reboot : MonoBehaviour
+    public static class Reboot
     {
+        public static bool enabled = true;
         public static float duration = 3f;
 
         public static GameObject RebootOverlay { get; private set; }
         public static GameObject VentEffect { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+            const string SECTION = "Reboot";
+            instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.SkillsConfig.Bind(ref duration, SECTION, "Duration");
+            if (enabled)
+            {
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texToolbotRebootIcon", out var texToolbotRebootIcon);
 
@@ -42,7 +49,7 @@ partial class FreeSkillSaturday
             yield return CreateVentEffectAsync();
         }
 
-        public IEnumerator CreateRebootOverlayAsync()
+        public static IEnumerator CreateRebootOverlayAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerOfflineUI.prefab", out var RailgunnerOfflineUI);
             yield return instance.Assets.LoadAssetAsync<Sprite>("texRebootUIGear", out var texRebootUIGear);
@@ -62,7 +69,7 @@ partial class FreeSkillSaturday
             DestroyImmediate(barContainer.transform.Find("Inner/SpinnySquare").gameObject);
         }
 
-        public IEnumerator CreateVentEffectAsync()
+        public static IEnumerator CreateVentEffectAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Chest1/Chest1Starburst.prefab", out var Chest1Starburst);
 

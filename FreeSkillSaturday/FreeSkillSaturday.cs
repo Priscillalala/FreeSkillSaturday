@@ -60,20 +60,15 @@ public partial class FreeSkillSaturday : BaseContentPlugin
         loadStaticContentAsync += LoadStaticContentAsync;
         finalizeAsync += FinalizeAsync;
 
-        GameObject freeSkillSaturday = new GameObject("FreeSkillSaturday", new[]
-        {
-            typeof(Entropy),
-            typeof(GodlessEye),
-            typeof(FlintArrowhead),
-            //typeof(Theremin),
-            typeof(Disembowel),
-            typeof(PulseGrenade),
-            typeof(Reboot),
-            typeof(Venom),
-            typeof(XQRChip),
-        });
-        DontDestroyOnLoad(freeSkillSaturday);
-        Theremin.Awake();
+        Entropy.Init();
+        GodlessEye.Init();
+        FlintArrowhead.Init();
+        Theremin.Init();
+        Disembowel.Init();
+        PulseGrenade.Init();
+        Reboot.Init();
+        Venom.Init();
+        XQRChip.Init();
     }
 
     private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)

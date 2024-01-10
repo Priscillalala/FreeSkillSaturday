@@ -12,18 +12,25 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class XQRChip : MonoBehaviour
+    public static class XQRChip
     {
+        public static bool enabled = true;
         public static float bounceRadius = 30f;
 
         public static GameObject SmartTargetVisualizer { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+            const string SECTION = "XQR Chip";
+            instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.SkillsConfig.Bind(ref bounceRadius, SECTION, "Bounce Radius");
+            if (enabled)
+            {
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerBouncingBulletsIcon", out var texRailgunnerBouncingBulletsIcon);
 
@@ -41,7 +48,7 @@ partial class FreeSkillSaturday
             yield return CreateSmartTargetVisualizerAsync();
         }
 
-        public IEnumerator CreateSmartTargetVisualizerAsync()
+        public static IEnumerator CreateSmartTargetVisualizerAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerSniperTargetVisualizerHeavy.prefab", out var RailgunnerSniperTargetVisualizerHeavy);
 

@@ -5,23 +5,33 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class FlintArrowhead : MonoBehaviour
+    public static class FlintArrowhead
     {
+        public static bool enabled = true;
         public static float damage = 3f;
         public static float damagePerStack = 3f;
 
-        public DamageColorIndex StrongerBurn { get; private set; }
+        public static DamageColorIndex StrongerBurn { get; private set; }
         public static GameObject ImpactArrowhead { get; private set; }
-        public GameObject ImpactArrowheadStronger { get; private set; }
+        public static GameObject ImpactArrowheadStronger { get; private set; }
 
-        public void Awake()
+        public static void Init()
         {
-            StrongerBurn = ColorsAPI.RegisterDamageColor(new Color32(244, 113, 80, 255));
+            const string SECTION = "Flint Arrowhead";
+            instance.ItemsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.ItemsConfig.Bind(ref damage, SECTION, "Flat Damage");
+            instance.ItemsConfig.Bind(ref damagePerStack, SECTION, "Flat Damage Per Stack");
+            if (enabled)
+            {
+                StrongerBurn = ColorsAPI.RegisterDamageColor(new Color32(244, 113, 80, 255));
 
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                On.RoR2.DotController.InitDotCatalog += DotController_InitDotCatalog;
+                Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             yield return instance.Assets.LoadAssetAsync<Sprite>("texArrowheadIcon", out var texArrowheadIcon);
             yield return instance.Assets.LoadAssetAsync<GameObject>("PickupArrowhead", out var PickupArrowhead);
@@ -66,7 +76,7 @@ partial class FreeSkillSaturday
             yield return CreateImpactArrowheadStrongerAsync();
         }
 
-        public IEnumerator CreateImpactArrowheadAsync()
+        public static IEnumerator CreateImpactArrowheadAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Common/VFX/OmniExplosionVFXQuick.prefab", out var OmniExplosionVFXQuick);
 
@@ -98,7 +108,7 @@ partial class FreeSkillSaturday
             instance.Content.AddEffectPrefab(ImpactArrowhead);
         }
 
-        public IEnumerator CreateImpactArrowheadStrongerAsync()
+        public static IEnumerator CreateImpactArrowheadStrongerAsync()
         {
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat", out var matOmniHitspark3Gasoline);
 
@@ -107,25 +117,13 @@ partial class FreeSkillSaturday
             instance.Content.AddEffectPrefab(impactArrowheadStronger);
         }
 
-        public void OnEnable()
-        {
-            On.RoR2.DotController.InitDotCatalog += DotController_InitDotCatalog;
-            Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
-        }
-
-        public void OnDisable()
-        {
-            On.RoR2.DotController.InitDotCatalog -= DotController_InitDotCatalog;
-            Events.GlobalEventManager.onHitEnemyAcceptedServer -= GlobalEventManager_onHitEnemyAcceptedServer;
-        }
-
-        private void DotController_InitDotCatalog(On.RoR2.DotController.orig_InitDotCatalog orig)
+        private static void DotController_InitDotCatalog(On.RoR2.DotController.orig_InitDotCatalog orig)
         {
             orig();
             DotController.dotDefs[(int)DotController.DotIndex.StrongerBurn].damageColorIndex = StrongerBurn;
         }
 
-        private void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
+        private static void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
         {
             if (damageInfo.attacker && damageInfo.attacker.TryGetComponent(out CharacterBody attackerBody) && attackerBody.HasItem(Items.Arrowhead, out int stack) && Util.CheckRoll(100f * damageInfo.procCoefficient, attackerBody.master))
             {

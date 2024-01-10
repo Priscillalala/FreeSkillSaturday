@@ -11,21 +11,17 @@ partial class FreeSkillSaturday
         public static float attackSpeedBonus = 0.45f;
         public static float attackSpeedBonusPerStack = 0.45f;
 
-        public static void Awake()
+        public static void Init()
         {
-            instance.Logger.LogInfo("Theremin Awake!");
             const string SECTION = "Theremin";
             instance.ItemsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
             instance.ItemsConfig.Bind(ref attackSpeedBonus, SECTION, "Attack Speed Bonus");
             instance.ItemsConfig.Bind(ref attackSpeedBonusPerStack, SECTION, "Attack Speed Bonus Per Stack");
-            if (!enabled)
+            if (enabled)
             {
-                //Destroy(this);
-                return;
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                On.RoR2.MusicController.UpdateTeleporterParameters += MusicController_UpdateTeleporterParameters;
             }
-            instance.Logger.LogInfo("Theremin Awake: enabled!");
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
-            On.RoR2.MusicController.UpdateTeleporterParameters += MusicController_UpdateTeleporterParameters;
         }
 
         private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)

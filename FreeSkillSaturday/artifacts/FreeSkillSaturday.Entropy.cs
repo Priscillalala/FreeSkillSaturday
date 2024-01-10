@@ -8,8 +8,9 @@ namespace FreeItemFriday;
 
 partial class FreeSkillSaturday
 {
-    public class Entropy : MonoBehaviour
+    public static class Entropy
     {
+        public static bool enabled = true;
         public static float baseAccelerationMultiplier = 0.05f;
         public static float airAccelerationCoefficient = 2f;
         public static float positiveAccelerationCoefficient = 10f;
@@ -18,15 +19,25 @@ partial class FreeSkillSaturday
         public static PhysicMaterial SlidingProjectile { get; private set; }
         public static GameObject SlipperyTerrainFormulaDisplay { get; private set; }
 
-        public Dictionary<Material, Material> slipperyMaterialInstances;
-        public bool didUpdateSceneVisuals;
+        public static Dictionary<Material, Material> slipperyMaterialInstances;
+        public static bool didUpdateSceneVisuals;
 
-        public void Awake()
+        public static void Init()
         {
-            instance.loadStaticContentAsync += LoadStaticContentAsync;
+            const string SECTION = "Artifact of Entropy";
+            instance.ArtifactsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
+            instance.ArtifactsConfig.Bind(ref baseAccelerationMultiplier, SECTION, "Base Acceleration Multiplier");
+            instance.ArtifactsConfig.Bind(ref airAccelerationCoefficient, SECTION, "Air Acceleration Coefficient");
+            instance.ArtifactsConfig.Bind(ref positiveAccelerationCoefficient, SECTION, "Positive Acceleration Coefficient");
+            instance.ArtifactsConfig.Bind(ref horizontalJumpBoostCoefficient, SECTION, "Horizontal Jump Boost Coefficient");
+            if (enabled)
+            {
+                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+            }
         }
 
-        private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
             ArtifactCode artifactCode = new ArtifactCode(
                 (ArtifactCompound.Circle, ArtifactCompound.Circle, ArtifactCompound.Circle),
@@ -72,7 +83,7 @@ partial class FreeSkillSaturday
             yield return CreateSlipperyTerrainFormulaDisplayAsync(artifactCode);
         }
 
-        public IEnumerator CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
+        public static IEnumerator CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
         {
             yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var ArtifactFormulaDisplay);
 
@@ -93,18 +104,8 @@ partial class FreeSkillSaturday
                 mesh.gameObject.SetActive(false);
             }
         }
-        
-        public void OnEnable()
-        {
-            SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
-        }
 
-        public void OnDisable()
-        {
-            SceneManager.activeSceneChanged -= SceneManager_activeSceneChanged;
-        }
-
-        private void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)
+        private static void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)
         {
             if (newScene.name == "snowyforest" && SlipperyTerrainFormulaDisplay)
             {
@@ -112,10 +113,10 @@ partial class FreeSkillSaturday
             }
             if (didUpdateSceneVisuals = RunArtifactManager.instance && RunArtifactManager.instance.IsArtifactEnabled(Artifacts.SlipperyTerrain))
             {
-                StartCoroutine(nameof(UpdateSceneVisuals));
+                instance.StartCoroutine(nameof(UpdateSceneVisuals));
             }
         }
-        public IEnumerator UpdateSceneVisuals()
+        public static IEnumerator UpdateSceneVisuals()
         {
             yield return new WaitForEndOfFrame();
             if (slipperyMaterialInstances != null)
@@ -192,11 +193,11 @@ partial class FreeSkillSaturday
             yield break;
         }
 
-        public void OnArtifactEnabled()
+        public static void OnArtifactEnabled()
         {
             if (!didUpdateSceneVisuals)
             {
-                StartCoroutine(nameof(UpdateSceneVisuals));
+                instance.StartCoroutine(nameof(UpdateSceneVisuals));
             }
             On.RoR2.CharacterMotor.OnGroundHit += CharacterMotor_OnGroundHit;
             IL.EntityStates.GenericCharacterMain.ApplyJumpVelocity += GenericCharacterMain_ApplyJumpVelocity;
@@ -205,7 +206,7 @@ partial class FreeSkillSaturday
             On.RoR2.Projectile.ProjectileStickOnImpact.Awake += ProjectileStickOnImpact_Awake;
         }
 
-        public void OnArtifactDisabled()
+        public static void OnArtifactDisabled()
         {
             On.RoR2.Projectile.ProjectileStickOnImpact.Awake -= ProjectileStickOnImpact_Awake;
             On.RoR2.Projectile.ProjectileStickOnImpact.UpdateSticking -= ProjectileStickOnImpact_UpdateSticking;
@@ -214,7 +215,7 @@ partial class FreeSkillSaturday
             On.RoR2.CharacterMotor.OnGroundHit -= CharacterMotor_OnGroundHit;
         }
 
-        private void ProjectileStickOnImpact_Awake(On.RoR2.Projectile.ProjectileStickOnImpact.orig_Awake orig, ProjectileStickOnImpact self)
+        private static void ProjectileStickOnImpact_Awake(On.RoR2.Projectile.ProjectileStickOnImpact.orig_Awake orig, ProjectileStickOnImpact self)
         {
             orig(self);
             if (self.TryGetComponent(out Collider collider))
@@ -228,7 +229,7 @@ partial class FreeSkillSaturday
             }
         }
 
-        private void ProjectileStickOnImpact_UpdateSticking(On.RoR2.Projectile.ProjectileStickOnImpact.orig_UpdateSticking orig, ProjectileStickOnImpact self)
+        private static void ProjectileStickOnImpact_UpdateSticking(On.RoR2.Projectile.ProjectileStickOnImpact.orig_UpdateSticking orig, ProjectileStickOnImpact self)
         {
             if (self.hitHurtboxIndex == -2 && !self.GetComponent<ProjectileGrappleController>())
             {
@@ -242,13 +243,13 @@ partial class FreeSkillSaturday
             orig(self);
         }
 
-        private void CharacterMotor_OnGroundHit(On.RoR2.CharacterMotor.orig_OnGroundHit orig, CharacterMotor self, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
+        private static void CharacterMotor_OnGroundHit(On.RoR2.CharacterMotor.orig_OnGroundHit orig, CharacterMotor self, Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport)
         {
             orig(self, hitCollider, hitNormal, hitPoint, ref hitStabilityReport);
             self.isAirControlForced = true;
         }
 
-        private void GenericCharacterMain_ApplyJumpVelocity(ILContext il)
+        private static void GenericCharacterMain_ApplyJumpVelocity(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             bool ilFound = c.TryGotoNext(MoveType.Before,
@@ -269,7 +270,7 @@ partial class FreeSkillSaturday
             else instance.Logger.LogError($"{nameof(Entropy)}.{nameof(GenericCharacterMain_ApplyJumpVelocity)} IL hook failed!");
         }
 
-        private void CharacterMotor_PreMove(ILContext il)
+        private static void CharacterMotor_PreMove(ILContext il)
         {
             ILCursor c = new ILCursor(il);
             int locTargetIndex = -1;
