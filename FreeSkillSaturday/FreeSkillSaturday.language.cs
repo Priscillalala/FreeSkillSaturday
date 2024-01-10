@@ -53,7 +53,7 @@ partial class FreeSkillSaturday
         #endregion
 
         #region achievements
-        { Achievements.BurnMultipleEnemies?.NameToken, "Burn to Kill"  },
+        { Achievements.BurnMultipleEnemies?.NameToken, "Burn To Kill"  },
         { Achievements.BurnMultipleEnemies?.DescriptionToken, "Ignite 10 enemies simultaneously." },
         { Achievements.ObtainArtifactSlipperyTerrain?.NameToken, "Trial of Entropy" },
         { Achievements.ObtainArtifactSlipperyTerrain?.DescriptionToken, "Complete the Trial of Entropy." },

@@ -57,9 +57,6 @@ public partial class FreeSkillSaturday : BaseContentPlugin
         ItemsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Items.cfg"), false);
         SkillsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Skills.cfg"), false);
 
-        loadStaticContentAsync += LoadStaticContentAsync;
-        finalizeAsync += FinalizeAsync;
-
         Entropy.Init();
         GodlessEye.Init();
         FlintArrowhead.Init();
@@ -71,7 +68,7 @@ public partial class FreeSkillSaturday : BaseContentPlugin
         XQRChip.Init();
     }
 
-    private IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+    protected override IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
     {
         if (!freeitemfridayassets.isDone)
         {
@@ -87,10 +84,14 @@ public partial class FreeSkillSaturday : BaseContentPlugin
 
         yield return Ivyl.LoadAddressableAssetsAsync<ItemDisplayRuleSet>(new[] { "ContentPack:RoR2.BaseContent", "ContentPack:RoR2.DLC1" }, out var idrs);
         itemDisplayRuleSets = idrs.Result;
+
+        yield return base.LoadStaticContentAsync(args);
     }
 
-    private IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
+    protected override IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
     {
+        yield return base.FinalizeAsync(args);
+
         yield return freeitemfridayassets.assetBundle?.UpgradeStubbedShadersAsync();
 
         freeitemfridayassets.assetBundle?.Unload(false);
