@@ -40,11 +40,11 @@ partial class FreeSkillSaturday
 
     public static class Skills
     {
-        [CanBeNull] public static SkillDef CrocoPassiveToxin;
+        [CanBeNull] public static Venom.ToxinSkillDef CrocoPassiveToxin;
         [CanBeNull] public static SkillDef CrocoSuperBite;
-        [CanBeNull] public static SkillDef RailgunnerElectricGrenade;
+        [CanBeNull] public static RailgunSkillDef RailgunnerElectricGrenade;
         [CanBeNull] public static SkillDef ToolbotRepair;
-        [CanBeNull] public static SkillDef RailgunnerPassiveBouncingBullets;
+        [CanBeNull] public static XQRChip.BouncingBulletsSkillDef RailgunnerPassiveBouncingBullets;
         [CanBeNull] public static SkillDef ToolbotReboot;
     }
 

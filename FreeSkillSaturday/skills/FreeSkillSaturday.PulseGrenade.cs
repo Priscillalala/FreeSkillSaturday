@@ -52,8 +52,8 @@ partial class FreeSkillSaturday
                 .SetRechargeStock(0)
                 .SetRequiredStock(0)
                 .SetStockToConsume(0)
-                .SetKeywordTokens("KEYWORD_SHOCKING")
-                .SetAdditionalFields(railgunSkillDef => railgunSkillDef.offlineIcon = RailgunnerBodyFirePistol.Result.offlineIcon);
+                .SetKeywordTokens("KEYWORD_SHOCKING");
+            Skills.RailgunnerElectricGrenade.offlineIcon = RailgunnerBodyFirePistol.Result.offlineIcon;
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerBodyPrimaryFamily.asset", out var RailgunnerBodyPrimaryFamily);
 
