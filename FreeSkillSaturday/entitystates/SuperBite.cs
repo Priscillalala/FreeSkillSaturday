@@ -53,10 +53,6 @@ public class SuperBite : BasicMeleeAttack
         {
             Destroy(secondSwingEffectInstance);
         }
-        /*if (slash2EffectInstance)
-        {
-            Destroy(slash2EffectInstance);
-        }*/
         base.OnExit();
     }
 
@@ -72,6 +68,10 @@ public class SuperBite : BasicMeleeAttack
     {
         base.AuthorityModifyOverlapAttack(overlapAttack);
         overlapAttack.damageType |= DamageType.BonusToLowHealth | DamageType.BleedOnHit;
+        if (outer.TryGetComponent(out CrocoDamageTypeController crocoDamageTypeController))
+        {
+            overlapAttack.damageType |= crocoDamageTypeController.GetDamageType();
+        }
     }
 
     public override void OnMeleeHitAuthority()
@@ -88,10 +88,6 @@ public class SuperBite : BasicMeleeAttack
             {
                 scaleParticleSystemDuration.newDuration = 20f;
             }
-            /*if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
-            {
-                scaleParticleSystemDuration.newDuration = 20f;
-            }*/
         }
         base.AuthorityFixedUpdate();
         if (authorityHasFiredAtAll)
@@ -112,11 +108,6 @@ public class SuperBite : BasicMeleeAttack
         {
             overlapAttack.impactSound = Addressables.LoadAssetAsync<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridBiteHit.asset").WaitForCompletion().index;
             overlapAttack.AddModdedDamageType(FreeSkillSaturday.Disembowel.SuperBleedOnHit);
-            CrocoDamageTypeController crocoDamageTypeController = base.GetComponent<CrocoDamageTypeController>();
-            if (crocoDamageTypeController)
-            {
-                overlapAttack.damageType |= crocoDamageTypeController.GetDamageType();
-            }
         }
         overlapAttack.ResetIgnoredHealthComponents();
     }
@@ -126,7 +117,6 @@ public class SuperBite : BasicMeleeAttack
         bool meleeAttackHasBegun = this.meleeAttackHasBegun;
         if (!meleeAttackHasBegun)
         {
-            //GameObject crocoSlashEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoComboFinisherSlash.prefab").WaitForCompletion();
             Transform transform = base.FindModelChild("MouthMuzzle");
             if (transform && !secondSwingEffectInstance)
             {
@@ -137,23 +127,9 @@ public class SuperBite : BasicMeleeAttack
                     scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
                 }
             }
-            /*Transform slash2Transform = base.FindModelChild("Slash2");
-            if (slash2Transform && !slash2EffectInstance)
-            {
-                slash2EffectInstance = UnityEngine.Object.Instantiate(crocoSlashEffect, slash2Transform);
-                if (slash2EffectInstance.TryGetComponent(out ScaleParticleSystemDuration scaleParticleSystemDuration))
-                {
-                    scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
-                }
-            }*/
         }
         AddRecoil(0.9f * recoilAmplitude, 1.1f * recoilAmplitude, -0.1f * recoilAmplitude, 0.1f * recoilAmplitude);
         base.BeginMeleeAttackEffect();
-        /*if (!meleeAttackHasBegun && this.meleeAttackHasBegun && swingEffectInstance)
-        {
-            swingEffectInstance.transform.forward = characterDirection.forward;
-            swingEffectInstance.transform.localScale *= 1.2f;
-        } */
     }
 
     public override void AuthorityExitHitPause()
@@ -163,10 +139,6 @@ public class SuperBite : BasicMeleeAttack
         {
             scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
         }
-        /*if (slash2EffectInstance && slash2EffectInstance.TryGetComponent(out scaleParticleSystemDuration))
-        {
-            scaleParticleSystemDuration.newDuration = scaleParticleSystemDuration.initialDuration;
-        }*/
     }
 
     public override InterruptPriority GetMinimumInterruptPriority() => fixedAge >= durationBeforeInterruptable ? InterruptPriority.Skill : InterruptPriority.Pain;
