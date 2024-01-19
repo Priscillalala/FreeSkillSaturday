@@ -19,7 +19,7 @@ public class SuperBite : BasicMeleeAttack
         beginStateSoundString = "Play_acrid_m2_bite_shoot";
         impactSound = Addressables.LoadAssetAsync<NetworkSoundEventDef>("RoR2/Base/Croco/nseAcridM1Hit.asset").WaitForCompletion();
         forceForwardVelocity = true;
-        forwardVelocityCurve = (_forwardVelocityCurve ??= new AnimationCurve(new Keyframe(0.17f, 0f), new Keyframe(0.21f, 0.55f), new Keyframe(0.3f, 0f)));
+        forwardVelocityCurve = (_forwardVelocityCurve ??= new AnimationCurve(new Keyframe(0.17f, 0f), new Keyframe(0.21f, 0.5f), new Keyframe(0.3f, 0f)));
         swingEffectMuzzleString = "Slash3";
         swingEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoComboFinisherSlash.prefab").WaitForCompletion();
     }

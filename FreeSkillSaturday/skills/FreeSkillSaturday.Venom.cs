@@ -1,7 +1,8 @@
 ﻿using RoR2.Skills;
 using JetBrains.Annotations;
-using EntityStates.BrotherMonster;
 using FreeItemFriday.Achievements;
+using EntityStates.Croco;
+using System.Runtime.CompilerServices;
 
 namespace FreeItemFriday;
 
@@ -11,9 +12,9 @@ partial class FreeSkillSaturday
     {
         public static bool enabled = true;
         public static float damageCoefficientPerSecond = 1f;
-        public static float duration = 5f;
-        public static float speedReductionPerSecond = 0.05f;
-        public static bool enableMithrixAttackSpeedFix = true;
+        public static float duration = 10f;
+        public static float slowCoefficient = 0.5f;
+        public static float initialSlowBonus = 1f;
 
         public static DotController.DotIndex ToxinDot { get; private set; }
 
@@ -23,22 +24,30 @@ partial class FreeSkillSaturday
             instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
             instance.SkillsConfig.Bind(ref damageCoefficientPerSecond, SECTION, "Damage Coefficient Per Second");
             instance.SkillsConfig.Bind(ref duration, SECTION, "Duration");
-            instance.SkillsConfig.Bind(ref speedReductionPerSecond, SECTION, "Speed Reduction Per Second");
-            instance.SkillsConfig.Bind(ref enableMithrixAttackSpeedFix, SECTION, "Enable Mithrix Attack Speed Fix", "Fix attack speed scaling on Mithrix's hammer slam");
+            instance.SkillsConfig.Bind(ref slowCoefficient, SECTION, "Move Speed Reduction");
+            instance.SkillsConfig.Bind(ref initialSlowBonus, SECTION, "Bonus Move Speed Reduction", "An additional slow applied for the first 0.5 seconds to affect monsters immune to stun.");
             if (enabled)
             {
                 Buffs.Toxin = instance.Content.DefineBuff("Toxin");
-                ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Buffs.Toxin);
+                ToxinDot = DotAPI.RegisterDotDef(0.333f, damageCoefficientPerSecond * 0.333f, DamageColorIndex.Poison, Buffs.Toxin, (dotController, dotStack) => 
+                {
+                    dotStack.damageType |= DamageType.NonLethal;
+                    for (int i = 0; i < dotController.dotStackList.Count; i++)
+                    {
+                        if (dotController.dotStackList[i].dotIndex == ToxinDot)
+                        {
+                            dotStack.damage = Mathf.Max(dotStack.damage, dotController.dotStackList[i].damage);
+                            dotStack.timer = Mathf.Max(dotStack.timer, dotController.dotStackList[i].timer);
+                            dotController.RemoveDotStackAtServer(i);
+                            break;
+                        }
+                    }
+                });
 
                 instance.loadStaticContentAsync += LoadStaticContentAsync;
-                On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
+                //On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
                 RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
-                if (enableMithrixAttackSpeedFix)
-                {
-                    IL.EntityStates.BrotherMonster.WeaponSlam.OnEnter += FixWeaponSlamDuration;
-                    IL.EntityStates.BrotherMonster.WeaponSlam.FixedUpdate += FixWeaponSlamDuration;
-                    IL.EntityStates.BrotherMonster.WeaponSlam.GetMinimumInterruptPriority += FixWeaponSlamPriorityDuration;
-                }
+                On.EntityStates.Croco.Leap.GetBlastDamageType += Leap_GetBlastDamageType;
             }
         }
 
@@ -48,7 +57,7 @@ partial class FreeSkillSaturday
 
             Skills.CrocoPassiveToxin = instance.Content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
                 .SetIconSprite(texCrocoPassiveVenomIcon.asset)
-                .SetKeywordTokens("FSS_KEYWORD_VENOM");
+                .SetKeywordTokens("KEYWORD_STUNNING", "FSS_KEYWORD_VENOM");
 
             yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset", out var CrocoBodyPassiveFamily);
 
@@ -59,14 +68,22 @@ partial class FreeSkillSaturday
             // Match achievement identifiers from 1.6.1
             Achievements.CrocoKillBossCloaked.AchievementDef.identifier = "FSS_CrocoKillBossCloaked";
 
-            yield return Ivyl.LoadAddressableAssetAsync<Sprite>("RoR2/Base/Common/texBuffBleedingIcon.tif", out var texBuffBleedingIcon);
+            yield return instance.Assets.LoadAssetAsync<Sprite>("texBuffVenomIcon", out var texBuffVenomIcon);
 
-            Buffs.Toxin.SetIconSprite(texBuffBleedingIcon.Result, new Color32(156, 123, 255, 255));
+            Buffs.Toxin.SetIconSprite(texBuffVenomIcon.asset, new Color32(156, 123, 255, 255));
 
             Buffs.ToxinSlow = instance.Content.DefineBuff("ToxinSlow")
-                .SetFlags(BuffFlags.Stackable | BuffFlags.Hidden);
+                .SetFlags(BuffFlags.Hidden);
 
             yield return CreateToxicBurnEffectParamsAsync();
+
+            yield return Ivyl.LoadAddressableAssetAsync<SkillDef>("RoR2/Base/Croco/CrocoLeap.asset", out var CrocoLeap);
+
+            int index = Array.IndexOf(CrocoLeap.Result.keywordTokens, "KEYWORD_STUNNING");
+            if (index >= 0)
+            {
+                HG.ArrayUtils.ArrayRemoveAtAndResize(ref CrocoLeap.Result.keywordTokens, index);
+            }
         }
 
         public static IEnumerator CreateToxicBurnEffectParamsAsync()
@@ -79,6 +96,7 @@ partial class FreeSkillSaturday
             Material matToxin = new Material(matPoisoned.Result);
             matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
             matToxin.SetFloat("_AlphaBoost", 2.5f);
+            matToxin.SetFloat("_FresnelPower", -5.6f);
             matToxin.SetTexture("_RemapTex", texRampTritoneSmoothed.Result);
             matToxin.SetTexture("_Cloud2Tex", texCloudLightning1.Result);
             ToxinBuffBehaviour.toxinBurnEffectParams = new BurnEffectController.EffectParams
@@ -109,98 +127,29 @@ partial class FreeSkillSaturday
 
         private static void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
-            if (sender.HasBuff(Buffs.ToxinSlow, out int count))
+            if (sender.HasBuff(Buffs.Toxin))
             {
-                float reduction = speedReductionPerSecond * count;
-                if (sender.rigidbody && sender.rigidbody.mass < 250f)
+                args.moveSpeedReductionMultAdd += slowCoefficient;
+                if (sender.HasBuff(Buffs.ToxinSlow))
                 {
-                    reduction *= 2f;
+                    args.moveSpeedReductionMultAdd += initialSlowBonus;
                 }
-                args.moveSpeedReductionMultAdd += reduction;
-                args.attackSpeedReductionMultAdd += reduction;
             }
         }
 
-        private static void FixWeaponSlamDuration(ILContext il)
+        private static DamageType Leap_GetBlastDamageType(On.EntityStates.Croco.Leap.orig_GetBlastDamageType orig, Leap self)
         {
-            ILCursor c = new ILCursor(il);
-            if (c.TryGotoNext(MoveType.After, x => x.MatchLdsfld<WeaponSlam>(nameof(WeaponSlam.duration))))
+            if (self.crocoDamageTypeController && HasToxin(self.crocoDamageTypeController)) 
             {
-                c.Emit(OpCodes.Ldarg, 0);
-                c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
+                return orig(self);
             }
-            else instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamDuration)} IL hook failed!");
+            return orig(self) & ~DamageType.Stun1s;
         }
 
-        private static void FixWeaponSlamPriorityDuration(ILContext il)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasToxin(CrocoDamageTypeController crocoDamageTypeController)
         {
-            ILCursor c = new ILCursor(il);
-            if (c.TryGotoNext(MoveType.After, x => x.MatchLdsfld<WeaponSlam>(nameof(WeaponSlam.durationBeforePriorityReduces))))
-            {
-                c.Emit(OpCodes.Ldarg, 0);
-                c.EmitDelegate<Func<float, WeaponSlam, float>>((duration, weaponSlam) => duration / weaponSlam.attackSpeedStat);
-            }
-            else instance.Logger.LogError($"{nameof(Venom)}.{nameof(FixWeaponSlamPriorityDuration)} IL hook failed!");
-        }
-
-        public class ToxinBuffBehaviour : BaseBuffBodyBehavior, IOnTakeDamageServerReceiver
-        {
-            [BuffDefAssociation(useOnServer = true, useOnClient = true)]
-            public static BuffDef GetBuffDef() => Buffs.Toxin;
-
-            public static BurnEffectController.EffectParams toxinBurnEffectParams;
-
-            private BurnEffectController burnEffectController;
-            private int _slowBuffCount;
-
-            public void OnEnable()
-            {
-                body.healthComponent?.AddTakeDamageReceiver(this);
-                if (body.modelLocator?.modelTransform)
-                {
-                    burnEffectController = base.gameObject.AddComponent<BurnEffectController>();
-                    burnEffectController.effectType = toxinBurnEffectParams;
-                    burnEffectController.target = body.modelLocator.modelTransform.gameObject;
-                }
-            }
-
-            public void OnDisable()
-            {
-                if (burnEffectController)
-                {
-                    Destroy(burnEffectController);
-                }
-                body.healthComponent?.RemoveTakeDamageReceiver(this);
-            }
-
-            public void OnTakeDamageServer(DamageReport damageReport)
-            {
-                if (damageReport.dotType == ToxinDot && Util.CheckRoll(33.3f, damageReport.attackerMaster))
-                {
-                    body.AddBuff(Buffs.ToxinSlow);
-                }
-            }
-
-            public void Update()
-            {
-                if (_slowBuffCount == (_slowBuffCount = body.GetBuffCount(Buffs.ToxinSlow)))
-                {
-                    return;
-                }
-                if (burnEffectController?.temporaryOverlay && burnEffectController.temporaryOverlay.materialInstance)
-                {
-                    float fresnelPower = 3f - _slowBuffCount * 0.15f;
-                    burnEffectController.temporaryOverlay.materialInstance.SetFloat("_FresnelPower", Mathf.Clamp(fresnelPower, 0.5f, 3f));
-                }
-            }
-
-            public void OnDestroy()
-            {
-                if (NetworkServer.active)
-                {
-                    body.SetBuffCount(Buffs.ToxinSlow.buffIndex, 0);
-                }
-            }
+            return crocoDamageTypeController.passiveSkillSlot && crocoDamageTypeController.passiveSkillSlot.skillDef is ToxinSkillDef;
         }
 
         public class ToxinSkillDef : SkillDef
@@ -242,21 +191,52 @@ partial class FreeSkillSaturday
             {
                 if ((damageInfo.damageType & Unused) > DamageType.Generic 
                     && damageInfo.attacker.TryGetComponent(out CrocoDamageTypeController crocoDamageTypeController) 
-                    && crocoDamageTypeController.passiveSkillSlot 
-                    && crocoDamageTypeController.passiveSkillSlot.skillDef is ToxinSkillDef
+                    && HasToxin(crocoDamageTypeController)
                     && victim)
                 {
                     DotController.InflictDot(victim, damageInfo.attacker, ToxinDot, duration * damageInfo.procCoefficient, 1f, dotMaxStacksFromAttacker);
+                    if (victim.TryGetComponent(out CharacterBody victimBody))
+                    {
+                        victimBody.AddTimedBuff(Buffs.ToxinSlow, 0.5f);
+                    }
                 }
             }
 
             private static DamageType CrocoDamageTypeController_GetDamageType(On.RoR2.CrocoDamageTypeController.orig_GetDamageType orig, CrocoDamageTypeController self)
             {
-                if (self.passiveSkillSlot && self.passiveSkillSlot.skillDef is ToxinSkillDef)
+                if (HasToxin(self))
                 {
-                    return Unused;
+                    return orig(self) | Unused | DamageType.Stun1s;
                 }
                 return orig(self);
+            }
+        }
+
+        public class ToxinBuffBehaviour : BaseBuffBodyBehavior
+        {
+            [BuffDefAssociation(useOnServer = true, useOnClient = true)]
+            public static BuffDef GetBuffDef() => Buffs.Toxin;
+
+            public static BurnEffectController.EffectParams toxinBurnEffectParams;
+
+            private BurnEffectController burnEffectController;
+
+            public void OnEnable()
+            {
+                if (body.modelLocator?.modelTransform)
+                {
+                    burnEffectController = gameObject.AddComponent<BurnEffectController>();
+                    burnEffectController.effectType = toxinBurnEffectParams;
+                    burnEffectController.target = body.modelLocator.modelTransform.gameObject;
+                }
+            }
+
+            public void OnDisable()
+            {
+                if (burnEffectController)
+                {
+                    Destroy(burnEffectController);
+                }
             }
         }
     }

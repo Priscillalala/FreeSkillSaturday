@@ -1,6 +1,6 @@
 # <img src="https://github.com/Priscillalala/FreeSkillSaturday/blob/master/thunderstore/texFreeItemFridayExpansionIcon.png?raw=true" alt="FreeItemFriday Icon" width=48> FreeItemFriday
 A content mod powered by IVYL. Currently features 3 new items & equipment, 5 new alternate skills, and a new artifact. 
-* For full descriptions of skills, items, and more, check the [wiki](https://thunderstore.io/package/Groove_Salad/FreeItemFriday/wiki/)! (Might be under construction)
+* For full descriptions of skills, items, and more, check the [wiki](https://thunderstore.io/package/Groove_Salad/FreeItemFriday/wiki/)!
 * FreeItemFriday was recently rewritten; you can find the old FreeItemFriday built with GrooveSharedUtils [here](https://github.com/Priscillalala/FreeItemFriday).
 
 ## Items

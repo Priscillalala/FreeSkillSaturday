@@ -30,7 +30,7 @@ namespace FreeItemFriday;
 [BepInDependency(ColorsAPI.PluginGUID)]
 [BepInDependency(DamageAPI.PluginGUID)]
 [BepInDependency(DotAPI.PluginGUID)]
-[BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "2.0.0")]
+[BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "1.7.0")]
 public partial class FreeSkillSaturday : BaseContentPlugin
 {
     protected static FreeSkillSaturday instance;

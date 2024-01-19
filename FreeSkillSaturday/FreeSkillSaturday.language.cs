@@ -39,8 +39,9 @@ partial class FreeSkillSaturday
 
         #region skills
         { Skills.CrocoPassiveToxin?.skillNameToken, $"Venom" },
-        { Skills.CrocoPassiveToxin?.skillDescriptionToken, $"Attacks that apply <style=cIsHealing>Poison</style> apply deadly <style=cIsUtility>Venom</style> instead, slowly <style=cIsUtility>immobilizing victims</style>." },
-        { "FSS_KEYWORD_VENOM", $"<style=cKeywordName>Venomous</style><style=cSub>Deal <style=cIsDamage>{Venom.damageCoefficientPerSecond:0%} damage per second</style> and reduce their movement and attack speed by <style=cIsUtility>{Venom.speedReductionPerSecond:0%} per second</style>. <i>2x effectiveness against lightweight enemies.</i></style>" },
+        { Skills.CrocoPassiveToxin?.skillDescriptionToken, $"Attacks that apply <style=cIsHealing>Poison</style> apply deadly <style=cIsUtility>Venom</style> instead, <style=cIsUtility>immobilizing victims</style>." },
+        { "FSS_KEYWORD_VENOM", $"<style=cKeywordName>Venomous</style><style=cSub>Deal <style=cIsDamage>{Venom.damageCoefficientPerSecond:0%} damage per second</style> and <style=cIsUtility>reduce their movement speed</style> by <style=cIsUtility>{Venom.slowCoefficient:0%}</style>. <i>Venom cannot kill enemies.</i></style>" },
+        { "CROCO_UTILITY_DESCRIPTION", "<style=cIsHealing>Poisonous</style>. Leap in the air, dealing <style=cIsDamage>320% damage</style>. Leave acid that deals <style=cIsDamage>25% damage</style>." },
         { Skills.CrocoSuperBite?.skillNameToken, $"Disembowel" },
         { Skills.CrocoSuperBite?.skillDescriptionToken, $"<style=cIsHealing>Poisonous</style>. <style=cIsDamage>Slayer</style>. Lacerate an enemy for <style=cIsDamage>3x{Disembowel.damageCoefficient:0%} damage</style>, causing <style=cIsDamage>bleeding</style> and <style=cIsHealth>hemorrhaging</style>." },
         { "FSS_KEYWORD_BLEED", $"<style=cKeywordName>Bleed</style><style=cSub>Deal <style=cIsDamage>320%</style> base damage over 4s. <i>Bleed can stack.</i></style>" },
