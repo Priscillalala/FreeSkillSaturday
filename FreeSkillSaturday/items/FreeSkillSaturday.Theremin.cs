@@ -9,7 +9,7 @@ partial class FreeSkillSaturday
     {
         public static bool enabled = true;
         public static float attackSpeedBonus = 0.45f;
-        public static float attackSpeedBonusPerStack = 0.45f;
+        public static float attackSpeedBonusPerStack = 0.35f;
 
         public static void Init()
         {

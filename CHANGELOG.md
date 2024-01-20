@@ -12,8 +12,6 @@
 * Disembowel
 	* All 3 hits apply poisonous now (used to be only the third hit)
 	* Slightly reduced lunge velocity
-* Theremin
-	* Attack speed bonus: 45% (+35% per stack) ⇒ 45% (+45% per stack)
 * XQR Chip
 	* Minor optimizations
 

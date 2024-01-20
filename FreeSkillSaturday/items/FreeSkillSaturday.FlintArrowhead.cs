@@ -112,9 +112,9 @@ partial class FreeSkillSaturday
         {
             yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/IgniteOnKill/matOmniHitspark3Gasoline.mat", out var matOmniHitspark3Gasoline);
 
-            GameObject impactArrowheadStronger = Ivyl.ClonePrefab(ImpactArrowhead, "ImpactArrowHeadStronger");
-            impactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = matOmniHitspark3Gasoline.Result;
-            instance.Content.AddEffectPrefab(impactArrowheadStronger);
+            ImpactArrowheadStronger = Ivyl.ClonePrefab(ImpactArrowhead, "ImpactArrowHeadStronger");
+            ImpactArrowheadStronger.transform.GetChild(0).GetComponent<Renderer>().sharedMaterial = matOmniHitspark3Gasoline.Result;
+            instance.Content.AddEffectPrefab(ImpactArrowheadStronger);
         }
 
         private static void DotController_InitDotCatalog(On.RoR2.DotController.orig_InitDotCatalog orig)
