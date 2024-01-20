@@ -113,7 +113,7 @@ partial class FreeSkillSaturday
             }
             if (didUpdateSceneVisuals = RunArtifactManager.instance && RunArtifactManager.instance.IsArtifactEnabled(Artifacts.SlipperyTerrain))
             {
-                instance.StartCoroutine(nameof(UpdateSceneVisuals));
+                instance.StartCoroutine(UpdateSceneVisuals());
             }
         }
         public static IEnumerator UpdateSceneVisuals()
@@ -153,13 +153,13 @@ partial class FreeSkillSaturday
                 {
                     if (mat.shader == HGStandard)
                     {
-                        matInstance = Instantiate(mat);
+                        matInstance = new Material(mat);
                         matInstance.SetFloat("_SpecularStrength", 0.6f);
                         matInstance.SetFloat("_SpecularExponent ", 10f);
                     }
                     else if (mat.shader == HGSnowTopped)
                     {
-                        matInstance = Instantiate(mat);
+                        matInstance = new Material(mat);
                         if (matInstance.GetTexture("_SnowNormalTex"))
                         {
                             matInstance.SetFloat("_SpecularStrength", 0.1f);
@@ -175,7 +175,7 @@ partial class FreeSkillSaturday
                     }
                     else if (mat.shader == HGTriplanarTerrainBlend)
                     {
-                        matInstance = Instantiate(mat);
+                        matInstance = new Material(mat);
                         matInstance.SetFloat("_GreenChannelSpecularStrength", 0.15f);
                         matInstance.SetFloat("_GreenChannelSpecularExponent", 8f);
                     }
@@ -197,7 +197,7 @@ partial class FreeSkillSaturday
         {
             if (!didUpdateSceneVisuals)
             {
-                instance.StartCoroutine(nameof(UpdateSceneVisuals));
+                instance.StartCoroutine(UpdateSceneVisuals());
             }
             On.RoR2.CharacterMotor.OnGroundHit += CharacterMotor_OnGroundHit;
             IL.EntityStates.GenericCharacterMain.ApplyJumpVelocity += GenericCharacterMain_ApplyJumpVelocity;
