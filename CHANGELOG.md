@@ -1,3 +1,22 @@
+## 1.7.0
+* Updated to IVYL 2.0
+	* Fixes language tokens not falling back to English when using other languages
+	* Fixes error spam with IVYL and HolyDLL
+	* Updated codebase - now loads both assets and addressables asynchronously (should be very smooth loading)
+	* Added ShaderSwapper dependency
+* Split config into multiple files
+	* Old config values will be lost - sorry!
+* Venom reworked
+	* No longer applies a stacking slow over time
+	* Stuns poisoned enemies and leaves a lingering slow
+* Disembowel
+	* All 3 hits apply poisonous now (used to be only the third hit)
+	* Slightly reduced lunge velocity
+* Theremin
+	* Attack speed bonus: 45% (+35% per stack) => 45% (+45% per stack)
+* XQR Chip
+	* Minor optimizations
+
 ## 1.6.1
 * Reboot resets equipment cooldowns
 * Fix reboot affecting the music of all players in a lobby
