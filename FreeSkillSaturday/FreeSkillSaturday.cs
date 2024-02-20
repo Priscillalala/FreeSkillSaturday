@@ -11,7 +11,6 @@ global using Mono.Cecil.Cil;
 global using IvyLibrary;
 global using R2API;
 global using RoR2;
-global using RoR2.ContentManagement;
 
 using ShaderSwapper;
 using System.Security;
@@ -31,12 +30,17 @@ namespace FreeItemFriday;
 [BepInDependency(DamageAPI.PluginGUID)]
 [BepInDependency(DotAPI.PluginGUID)]
 [BepInPlugin("groovesalad.FreeItemFriday", "FreeItemFriday", "1.7.0")]
-public partial class FreeSkillSaturday : BaseContentPlugin
+public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday.LoadStaticContentAsyncArgs, BaseContentPlugin.GetContentPackAsyncArgs, BaseContentPlugin.FinalizeAsyncArgs>
 {
+    public class LoadStaticContentAsyncArgs : BaseContentPlugin.LoadStaticContentAsyncArgs
+    {
+        public AssetBundle assets;
+        public AsyncOperationHandle<IDictionary<string, ItemDisplayRuleSet>> idrsHandle;
+    }
+
     protected static FreeSkillSaturday instance;
 
     private AssetBundleCreateRequest freeitemfridayassets;
-    protected IDictionary<string, ItemDisplayRuleSet> itemDisplayRuleSets;
 
     public AssetBundle Assets { get; private set; }
     public ConfigFile ArtifactsConfig { get; private set; }
@@ -66,34 +70,46 @@ public partial class FreeSkillSaturday : BaseContentPlugin
         Reboot.Init();
         Venom.Init();
         XQRChip.Init();
-    }
 
-    protected override IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
-    {
-        if (!freeitemfridayassets.isDone)
+        Expansion = Content.DefineExpansion();
+        loadStaticContentAsync += LoadExpansionIconAsync;
+        static IEnumerator<float> LoadExpansionIconAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return freeitemfridayassets;
+            var texFreeItemFridayExpansionIcon = args.assets.LoadAsync<Sprite>("texFreeItemFridayExpansionIcon");
+            while (!texFreeItemFridayExpansionIcon.isDone)
+            {
+                yield return texFreeItemFridayExpansionIcon.progress;
+            }
+            Expansion.SetIconSprite(texFreeItemFridayExpansionIcon.asset);
         }
-        Assets = freeitemfridayassets.assetBundle;
-
-        yield return Assets.LoadAssetAsync<Sprite>("texFreeItemFridayExpansionIcon", out var texFreeItemFridayExpansionIcon);
-        Expansion = Content.DefineExpansion()
-            .SetIconSprite(texFreeItemFridayExpansionIcon.asset);
-
-        Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly);
-
-        yield return Ivyl.LoadAddressableAssetsAsync<ItemDisplayRuleSet>(new[] { "ContentPack:RoR2.BaseContent", "ContentPack:RoR2.DLC1" }, out var idrs);
-        itemDisplayRuleSets = idrs.Result;
-
-        yield return base.LoadStaticContentAsync(args);
     }
 
-    protected override IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
+    protected override IEnumerator<float> LoadStaticContentAsync(LoadStaticContentAsyncArgs args) => new GenericLoadingCoroutine
     {
-        yield return base.FinalizeAsync(args);
+        { new AwaitAssetsCoroutine { freeitemfridayassets }, 0.1f },
+        delegate 
+        { 
+            args.assets = freeitemfridayassets.assetBundle;
+            args.idrsHandle = Addressables.LoadResourceLocationsAsync((IEnumerable)new[]
+            {
+                "ContentPack:RoR2.BaseContent",
+                "ContentPack:RoR2.DLC1"
+            }, Addressables.MergeMode.Union, typeof(ItemDisplayRuleSet)).ToAssetDictionary<ItemDisplayRuleSet>();
+        },
+        { base.LoadStaticContentAsync(args), 0.8f },
+        delegate 
+        { 
+            Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly); 
+        },
+    };
 
-        yield return freeitemfridayassets.assetBundle?.UpgradeStubbedShadersAsync();
-
-        freeitemfridayassets.assetBundle?.Unload(false);
-    }
+    protected override IEnumerator<float> FinalizeAsync(BaseContentPlugin.FinalizeAsyncArgs args) => new GenericLoadingCoroutine
+    {
+        { base.FinalizeAsync(args), 0.8f },
+        { freeitemfridayassets.assetBundle.UpgradeStubbedShadersAsync(), 0.15f },
+        delegate 
+        { 
+            freeitemfridayassets.assetBundle?.Unload(false); 
+        },
+    };
 }

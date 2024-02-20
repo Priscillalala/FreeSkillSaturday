@@ -16,6 +16,11 @@ partial class FreeSkillSaturday
         public static float positiveAccelerationCoefficient = 10f;
         public static float horizontalJumpBoostCoefficient = 0.5f;
 
+        public static ArtifactCode ArtifactCode => new ArtifactCode(
+            (ArtifactCompound.Circle, ArtifactCompound.Circle, ArtifactCompound.Circle),
+            (ArtifactCompound.Square, ArtifactCompound.Square, ArtifactCompound.Square),
+            (ArtifactCompound.Triangle, ArtifactCompound.Diamond, ArtifactCompound.Triangle));
+
         public static PhysicMaterial SlidingProjectile { get; private set; }
         public static GameObject SlipperyTerrainFormulaDisplay { get; private set; }
 
@@ -32,77 +37,124 @@ partial class FreeSkillSaturday
             instance.ArtifactsConfig.Bind(ref horizontalJumpBoostCoefficient, SECTION, "Horizontal Jump Boost Coefficient");
             if (enabled)
             {
-                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += CreateArtifactAsync;
+                instance.loadStaticContentAsync += CreateSlipperyTerrainFormulaDisplayAsync;
+                instance.loadStaticContentAsync += ModifyEngiBubbleShieldAsync;
+                static IEnumerator<float> ModifyEngiBubbleShieldAsync(LoadStaticContentAsyncArgs args)
+                {
+                    var EngiBubbleShield = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab");
+                    while (!EngiBubbleShield.IsDone)
+                    {
+                        yield return EngiBubbleShield.PercentComplete;
+                    }
+                    if (EngiBubbleShield.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
+                    {
+                        activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
+                    }
+                }
+                /*instance.loadStaticContentAsync += args =>
+                {
+                    var EngiBubbleShield = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab");
+                    return new GenericLoadingCoroutine
+                    {
+                        new AwaitAssetsCoroutine { EngiBubbleShield },
+                        delegate
+                        {
+                            if (EngiBubbleShield.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
+                            {
+                                activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
+                            }
+                        }
+                    };
+                };
+                instance.loadStaticContentAsync += args =>
+                {
+                    var physmatSlidingProjectile = args.assets.LoadAsync<PhysicMaterial>("physmatSlidingProjectile");
+                    return new GenericLoadingCoroutine
+                    {
+                        new AwaitAssetsCoroutine { physmatSlidingProjectile },
+                        delegate
+                        {
+                            SlidingProjectile = physmatSlidingProjectile.asset;
+                        }
+                    };
+                };*/
+                instance.loadStaticContentAsync += LoadPhysmatSlidingProjectileAsync;
+                static IEnumerator<float> LoadPhysmatSlidingProjectileAsync(LoadStaticContentAsyncArgs args)
+                {
+                    var physmatSlidingProjectile = args.assets.LoadAsync<PhysicMaterial>("physmatSlidingProjectile");
+                    while (!physmatSlidingProjectile.isDone)
+                    {
+                        yield return physmatSlidingProjectile.progress;
+                    }
+                    SlidingProjectile = physmatSlidingProjectile.asset;
+                }
+
                 SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
             }
         }
 
-        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator<float> CreateArtifactAsync(LoadStaticContentAsyncArgs args)
         {
-            ArtifactCode artifactCode = new ArtifactCode(
-                (ArtifactCompound.Circle, ArtifactCompound.Circle, ArtifactCompound.Circle),
-                (ArtifactCompound.Square, ArtifactCompound.Square, ArtifactCompound.Square),
-                (ArtifactCompound.Triangle, ArtifactCompound.Diamond, ArtifactCompound.Triangle));
-
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainEnabled", out var texArtifactSlipperyTerrainEnabled);
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texArtifactSlipperyTerrainDisabled", out var texArtifactSlipperyTerrainDisabled);
-            yield return instance.Assets.LoadAssetAsync<GameObject>("PickupSlipperyTerrain", out var PickupSlipperyTerrain);
-
-            Artifacts.SlipperyTerrain = instance.Content.DefineArtifact("SlipperyTerrain")
-                .SetIconSprites(texArtifactSlipperyTerrainEnabled.asset, texArtifactSlipperyTerrainDisabled.asset)
-                .SetPickupModelPrefab(PickupSlipperyTerrain.asset)
-                .SetArtifactCode(artifactCode)
-                .SetEnabledActions(OnArtifactEnabled, OnArtifactDisabled);
-
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texObtainArtifactSlipperyTerrainIcon", out var texObtainArtifactSlipperyTerrainIcon);
-
-            Achievements.ObtainArtifactSlipperyTerrain = instance.Content.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Artifacts.SlipperyTerrain)
-                .SetIconSprite(texObtainArtifactSlipperyTerrainIcon.asset)
-                .SetTrackerTypes(typeof(ObtainArtifactSlipperyTerrainAchievement));
-            // Match achievement identifiers from FreeItemFriday
-            Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
-
-            if (Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
+            var loadOps = (
+                texArtifactSlipperyTerrainEnabled: args.assets.LoadAsync<Sprite>("texArtifactSlipperyTerrainEnabled"),
+                texArtifactSlipperyTerrainDisabled: args.assets.LoadAsync<Sprite>("texArtifactSlipperyTerrainDisabled"),
+                PickupSlipperyTerrain: args.assets.LoadAsync<GameObject>("PickupSlipperyTerrain"),
+                texObtainArtifactSlipperyTerrainIcon: args.assets.LoadAsync<Sprite>("texObtainArtifactSlipperyTerrainIcon"),
+                matArtifact: Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat")
+                );
+            return new GenericLoadingCoroutine
             {
-                yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/artifactworld/matArtifact.mat", out var matArtifact);
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
+                {
+                    Artifacts.SlipperyTerrain = args.content.DefineArtifact("SlipperyTerrain")
+                        .SetIconSprites(loadOps.texArtifactSlipperyTerrainEnabled.asset, loadOps.texArtifactSlipperyTerrainDisabled.asset)
+                        .SetPickupModelPrefab(loadOps.PickupSlipperyTerrain.asset)
+                        .SetArtifactCode(ArtifactCode)
+                        .SetEnabledActions(OnArtifactEnabled, OnArtifactDisabled);
 
-                renderer.sharedMaterial = matArtifact.Result;
-            }
+                    Achievements.ObtainArtifactSlipperyTerrain = args.content.DefineAchievementForArtifact("ObtainArtifactSlipperyTerrain", Artifacts.SlipperyTerrain)
+                        .SetIconSprite(loadOps.texObtainArtifactSlipperyTerrainIcon.asset)
+                        .SetTrackerTypes(typeof(ObtainArtifactSlipperyTerrainAchievement));
+                    // Match achievement identifiers from FreeItemFriday
+                    Achievements.ObtainArtifactSlipperyTerrain.AchievementDef.identifier = "ObtainArtifactSlipperyTerrain";
 
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab", out var EngiBubbleShield);
-
-            if (EngiBubbleShield.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
-            {
-                activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
-            }
-
-            yield return instance.Assets.LoadAssetAsync<PhysicMaterial>("physmatSlidingProjectile", out var physmatSlidingProjectile);
-
-            SlidingProjectile = physmatSlidingProjectile.asset;
-
-            yield return CreateSlipperyTerrainFormulaDisplayAsync(artifactCode);
+                    if (Artifacts.SlipperyTerrain.pickupModelPrefab.transform.TryFind("mdlSlipperyTerrainArtifact", out Transform mdl) && mdl.TryGetComponent(out MeshRenderer renderer))
+                    {
+                        renderer.sharedMaterial = loadOps.matArtifact.Result;
+                    }
+                }
+            };
         }
 
-        public static IEnumerator CreateSlipperyTerrainFormulaDisplayAsync(ArtifactCode artifactCode)
+        private static IEnumerator<float> CreateSlipperyTerrainFormulaDisplayAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab", out var ArtifactFormulaDisplay);
-
-            SlipperyTerrainFormulaDisplay = Ivyl.ClonePrefab(ArtifactFormulaDisplay.Result, "SlipperyTerrainFormulaDisplay");
-
-            yield return Ivyl.SetupArtifactFormulaDisplayAsync(SlipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>(), artifactCode);
-
-            foreach (Decal decal in SlipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
+            var ArtifactFormulaDisplay = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/artifactworld/ArtifactFormulaDisplay.prefab");
+            return new GenericLoadingCoroutine
             {
-                decal.Fade = 0.15f;
-            }
-            if (SlipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
-            {
-                frame.gameObject.SetActive(false);
-            }
-            if (SlipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
-            {
-                mesh.gameObject.SetActive(false);
-            }
+                new AwaitAssetsCoroutine { ArtifactFormulaDisplay },
+                delegate
+                {
+                    SlipperyTerrainFormulaDisplay = Ivyl.ClonePrefab(ArtifactFormulaDisplay.Result, "SlipperyTerrainFormulaDisplay");
+                },
+                () => Ivyl.SetupArtifactFormulaDisplayAsync(SlipperyTerrainFormulaDisplay.GetComponent<ArtifactFormulaDisplay>(), ArtifactCode),
+                delegate
+                {
+                    foreach (Decal decal in SlipperyTerrainFormulaDisplay.GetComponentsInChildren<Decal>())
+                    {
+                        decal.Fade = 0.15f;
+                    }
+                    if (SlipperyTerrainFormulaDisplay.transform.TryFind("Frame", out Transform frame))
+                    {
+                        frame.gameObject.SetActive(false);
+                    }
+                    if (SlipperyTerrainFormulaDisplay.transform.TryFind("ArtifactFormulaHolderMesh", out Transform mesh))
+                    {
+                        mesh.gameObject.SetActive(false);
+                    }
+                }
+            };
         }
 
         private static void SceneManager_activeSceneChanged(Scene oldScene, Scene newScene)

@@ -45,7 +45,7 @@
 	    <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\Decalicious.dll</HintPath>
 	  </Reference>
 	  <Reference Include="Ivyl">
-	    <HintPath>..\..\Ivyl\Ivyl\obj\Debug\netstandard2.0\Ivyl.dll</HintPath>
+	    <HintPath>..\..\Ivyl\Ivyl\obj\Release\netstandard2.0\Ivyl.dll</HintPath>
 	  </Reference>
 	  <Reference Include="ShaderSwapper">
 	    <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\BepInEx\plugins\Smooth_Salad-ShaderSwapper\ShaderSwapper.dll</HintPath>

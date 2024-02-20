@@ -26,38 +26,51 @@ partial class FreeSkillSaturday
             instance.SkillsConfig.Bind(ref bounceRadius, SECTION, "Bounce Radius");
             if (enabled)
             {
-                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += CreateSkillAsync;
+                instance.loadStaticContentAsync += CreateSmartTargetVisualizerAsync;
             }
         }
 
-        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator<float> CreateSkillAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texRailgunnerBouncingBulletsIcon", out var texRailgunnerBouncingBulletsIcon);
+            var loadOps = (
+                texRailgunnerBouncingBulletsIcon: args.assets.LoadAsync<Sprite>("texRailgunnerBouncingBulletsIcon"),
+                RailgunnerPassiveFamily: Addressables.LoadAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerPassiveFamily.asset")
+            );
+            return new GenericLoadingCoroutine
+            {
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
+                {
+                    Skills.RailgunnerPassiveBouncingBullets = args.content.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
+                        .SetIconSprite(loadOps.texRailgunnerBouncingBulletsIcon.asset);
 
-            Skills.RailgunnerPassiveBouncingBullets = instance.Content.DefineSkill<BouncingBulletsSkillDef>("RailgunnerPassiveBouncingBullets")
-                .SetIconSprite(texRailgunnerBouncingBulletsIcon.asset);
-
-            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/DLC1/Railgunner/RailgunnerPassiveFamily.asset", out var RailgunnerPassiveFamily);
-
-            Achievements.RailgunnerEliteSniper = instance.Content.DefineAchievementForSkill("RailgunnerEliteSniper", ref RailgunnerPassiveFamily.Result.AddSkill(Skills.RailgunnerPassiveBouncingBullets))
-                .SetIconSprite(Skills.RailgunnerPassiveBouncingBullets.icon)
-                .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
-            // Match achievement identifiers from 1.6.1
-            Achievements.RailgunnerEliteSniper.AchievementDef.identifier = "FSS_RailgunnerEliteSniper";
-
-            yield return CreateSmartTargetVisualizerAsync();
+                    ref SkillFamily.Variant skillVariant = ref loadOps.RailgunnerPassiveFamily.Result.AddSkill(Skills.RailgunnerPassiveBouncingBullets);
+                    Achievements.RailgunnerEliteSniper = args.content.DefineAchievementForSkill("RailgunnerEliteSniper", ref skillVariant)
+                        .SetIconSprite(Skills.RailgunnerPassiveBouncingBullets.icon)
+                        .SetTrackerTypes(typeof(RailgunnerEliteSniperAchievement), null);
+                    // Match achievement identifiers from 1.6.1
+                    Achievements.RailgunnerEliteSniper.AchievementDef.identifier = "FSS_RailgunnerEliteSniper";
+                }
+            };
         }
 
-        public static IEnumerator CreateSmartTargetVisualizerAsync()
+        private static IEnumerator<float> CreateSmartTargetVisualizerAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerSniperTargetVisualizerHeavy.prefab", out var RailgunnerSniperTargetVisualizerHeavy);
-
-            SmartTargetVisualizer = Ivyl.ClonePrefab(RailgunnerSniperTargetVisualizerHeavy.Result, "RailgunnerSniperSmartTargetVisualizer");
-            Image outer = SmartTargetVisualizer.transform.Find("Scaler/Outer").GetComponent<Image>();
-            Image rectangle = SmartTargetVisualizer.transform.Find("Scaler/Rectangle").GetComponent<Image>();
-            outer.color = new Color32(79, 32, 29, 101);
-            rectangle.color = new Color32(250, 158, 93, 255);
-            rectangle.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+            var RailgunnerSniperTargetVisualizerHeavy = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/Railgunner/RailgunnerSniperTargetVisualizerHeavy.prefab");
+            return new GenericLoadingCoroutine
+            {
+                new AwaitAssetsCoroutine { RailgunnerSniperTargetVisualizerHeavy },
+                delegate
+                {
+                    SmartTargetVisualizer = Ivyl.ClonePrefab(RailgunnerSniperTargetVisualizerHeavy.Result, "RailgunnerSniperSmartTargetVisualizer");
+                    Image outer = SmartTargetVisualizer.transform.Find("Scaler/Outer").GetComponent<Image>();
+                    Image rectangle = SmartTargetVisualizer.transform.Find("Scaler/Rectangle").GetComponent<Image>();
+                    outer.color = new Color32(79, 32, 29, 101);
+                    rectangle.color = new Color32(250, 158, 93, 255);
+                    rectangle.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                }
+            };
         }
 
         public class BouncingBulletsSkillDef : SkillDef

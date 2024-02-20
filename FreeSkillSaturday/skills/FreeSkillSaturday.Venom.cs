@@ -44,65 +44,85 @@ partial class FreeSkillSaturday
                     }
                 });
 
-                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += CreateSkillAsync;
+                instance.loadStaticContentAsync += CreateToxicBurnEffectParamsAsync;
+                instance.loadStaticContentAsync += ModifyCrocoLeapAsync;
+                static IEnumerator<float> ModifyCrocoLeapAsync(LoadStaticContentAsyncArgs args)
+                {
+                    var CrocoLeap = Addressables.LoadAssetAsync<SkillDef>("RoR2/Base/Croco/CrocoLeap.asset");
+                    while (!CrocoLeap.IsDone)
+                    {
+                        yield return CrocoLeap.PercentComplete;
+                    }
+                    int index = Array.IndexOf(CrocoLeap.Result.keywordTokens, "KEYWORD_STUNNING");
+                    if (index >= 0)
+                    {
+                        HG.ArrayUtils.ArrayRemoveAtAndResize(ref CrocoLeap.Result.keywordTokens, index);
+                    }
+                }
                 //On.RoR2.DotController.OnDotStackAddedServer += DotController_OnDotStackAddedServer;
                 RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
                 On.EntityStates.Croco.Leap.GetBlastDamageType += Leap_GetBlastDamageType;
             }
         }
 
-        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator<float> CreateSkillAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoPassiveVenomIcon", out var texCrocoPassiveVenomIcon);
-
-            Skills.CrocoPassiveToxin = instance.Content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
-                .SetIconSprite(texCrocoPassiveVenomIcon.asset)
-                .SetKeywordTokens("KEYWORD_STUNNING", "FSS_KEYWORD_VENOM");
-
-            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset", out var CrocoBodyPassiveFamily);
-
-            Achievements.CrocoKillBossCloaked = instance.Content.DefineAchievementForSkill("CrocoKillBossCloaked", ref CrocoBodyPassiveFamily.Result.AddSkill(Skills.CrocoPassiveToxin))
-                .SetIconSprite(Skills.CrocoPassiveToxin.icon)
-                .SetPrerequisiteAchievement("BeatArena")
-                .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
-            // Match achievement identifiers from 1.6.1
-            Achievements.CrocoKillBossCloaked.AchievementDef.identifier = "FSS_CrocoKillBossCloaked";
-
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texBuffVenomIcon", out var texBuffVenomIcon);
-
-            Buffs.Toxin.SetIconSprite(texBuffVenomIcon.asset, new Color32(156, 123, 255, 255));
-
-            Buffs.ToxinSlow = instance.Content.DefineBuff("ToxinSlow")
-                .SetFlags(BuffFlags.Hidden);
-
-            yield return CreateToxicBurnEffectParamsAsync();
-
-            yield return Ivyl.LoadAddressableAssetAsync<SkillDef>("RoR2/Base/Croco/CrocoLeap.asset", out var CrocoLeap);
-
-            int index = Array.IndexOf(CrocoLeap.Result.keywordTokens, "KEYWORD_STUNNING");
-            if (index >= 0)
+            var loadOps = (
+                texCrocoPassiveVenomIcon: args.assets.LoadAsync<Sprite>("texCrocoPassiveVenomIcon"),
+                CrocoBodyPassiveFamily: Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodyPassiveFamily.asset"),
+                texBuffVenomIcon: args.assets.LoadAsync<Sprite>("texBuffVenomIcon")
+                );
+            return new GenericLoadingCoroutine
             {
-                HG.ArrayUtils.ArrayRemoveAtAndResize(ref CrocoLeap.Result.keywordTokens, index);
-            }
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
+                {
+                    Skills.CrocoPassiveToxin = args.content.DefineSkill<ToxinSkillDef>("CrocoPassiveToxin")
+                        .SetIconSprite(loadOps.texCrocoPassiveVenomIcon.asset)
+                        .SetKeywordTokens("KEYWORD_STUNNING", "FSS_KEYWORD_VENOM");
+
+                    ref SkillFamily.Variant skillVariant = ref loadOps.CrocoBodyPassiveFamily.Result.AddSkill(Skills.CrocoPassiveToxin);
+                    Achievements.CrocoKillBossCloaked = args.content.DefineAchievementForSkill("CrocoKillBossCloaked", ref skillVariant)
+                        .SetIconSprite(Skills.CrocoPassiveToxin.icon)
+                        .SetPrerequisiteAchievement("BeatArena")
+                        .SetTrackerTypes(typeof(CrocoKillBossCloakedAchievement), typeof(CrocoKillBossCloakedAchievement.ServerAchievement));
+                    // Match achievement identifiers from 1.6.1
+                    Achievements.CrocoKillBossCloaked.AchievementDef.identifier = "FSS_CrocoKillBossCloaked";
+
+                    Buffs.Toxin.SetIconSprite(loadOps.texBuffVenomIcon.asset, new Color32(156, 123, 255, 255));
+
+                    Buffs.ToxinSlow = args.content.DefineBuff("ToxinSlow")
+                        .SetFlags(BuffFlags.Hidden);
+                }
+            };
         }
 
-        public static IEnumerator CreateToxicBurnEffectParamsAsync()
+        private static IEnumerator<float> CreateToxicBurnEffectParamsAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat", out var matPoisoned);
-            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png", out var texRampTritoneSmoothed);
-            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/texCloudLightning1.png", out var texCloudLightning1);
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Croco/PoisonEffect.prefab", out var PoisonEffect);
-
-            Material matToxin = new Material(matPoisoned.Result);
-            matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
-            matToxin.SetFloat("_AlphaBoost", 2.5f);
-            matToxin.SetFloat("_FresnelPower", -5.6f);
-            matToxin.SetTexture("_RemapTex", texRampTritoneSmoothed.Result);
-            matToxin.SetTexture("_Cloud2Tex", texCloudLightning1.Result);
-            ToxinBuffBehaviour.toxinBurnEffectParams = new BurnEffectController.EffectParams
+            var loadOps = (
+                matPoisoned: Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matPoisoned.mat"),
+                texRampTritoneSmoothed: Addressables.LoadAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampTritoneSmoothed.png"),
+                texCloudLightning1: Addressables.LoadAssetAsync<Texture>("RoR2/Base/Common/texCloudLightning1.png"),
+                PoisonEffect: Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/PoisonEffect.prefab")
+                );
+            return new GenericLoadingCoroutine
             {
-                overlayMaterial = matToxin,
-                fireEffectPrefab = PoisonEffect.Result,
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
+                {
+                    Material matToxin = new Material(loadOps.matPoisoned.Result);
+                    matToxin.SetColor("_TintColor", new Color32(230, 189, 255, 255));
+                    matToxin.SetFloat("_AlphaBoost", 2.5f);
+                    matToxin.SetFloat("_FresnelPower", -5.6f);
+                    matToxin.SetTexture("_RemapTex", loadOps.texRampTritoneSmoothed.Result);
+                    matToxin.SetTexture("_Cloud2Tex", loadOps.texCloudLightning1.Result);
+                    ToxinBuffBehaviour.toxinBurnEffectParams = new BurnEffectController.EffectParams
+                    {
+                        overlayMaterial = matToxin,
+                        fireEffectPrefab = loadOps.PoisonEffect.Result,
+                    };
+                }
             };
         }
 

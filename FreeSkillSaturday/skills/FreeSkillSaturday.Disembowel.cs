@@ -23,64 +23,79 @@ partial class FreeSkillSaturday
             {
                 SuperBleedOnHit = DamageAPI.ReserveDamageType();
 
-                instance.loadStaticContentAsync += LoadStaticContentAsync;
+                instance.loadStaticContentAsync += CreateSkillAsync;
+                instance.loadStaticContentAsync += CreateCrocoSuperBiteEffectAsync;
                 Events.GlobalEventManager.onHitEnemyAcceptedServer += GlobalEventManager_onHitEnemyAcceptedServer;
             }
         }
 
-        private static IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
+        private static IEnumerator<float> CreateSkillAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return instance.Assets.LoadAssetAsync<Sprite>("texCrocoSuperBiteIcon", out var texCrocoSuperBiteIcon);
+            var loadOps = (
+                texCrocoSuperBiteIcon: args.assets.LoadAsync<Sprite>("texCrocoSuperBiteIcon"),
+                CrocoBodySpecialFamily: Addressables.LoadAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset")
+                );
+            return new GenericLoadingCoroutine
+            {
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
+                {
+                    Skills.CrocoSuperBite = args.content.DefineSkill<SkillDef>("CrocoSuperBite")
+                        .SetIconSprite(loadOps.texCrocoSuperBiteIcon.asset)
+                        .SetActivationState(typeof(EntityStates.Croco.SuperBite), "Weapon")
+                        .SetCooldown(10f)
+                        .SetInterruptPriority(InterruptPriority.PrioritySkill)
+                        .SetKeywordTokens("KEYWORD_POISON", "KEYWORD_SLAYER", "FSS_KEYWORD_BLEED", "KEYWORD_SUPERBLEED");
 
-            Skills.CrocoSuperBite = instance.Content.DefineSkill<SkillDef>("CrocoSuperBite")
-                .SetIconSprite(texCrocoSuperBiteIcon.asset)
-                .SetActivationState(typeof(EntityStates.Croco.SuperBite), "Weapon")
-                .SetCooldown(10f)
-                .SetInterruptPriority(InterruptPriority.PrioritySkill)
-                .SetKeywordTokens("KEYWORD_POISON", "KEYWORD_SLAYER", "FSS_KEYWORD_BLEED", "KEYWORD_SUPERBLEED");
-
-            yield return Ivyl.LoadAddressableAssetAsync<SkillFamily>("RoR2/Base/Croco/CrocoBodySpecialFamily.asset", out var CrocoBodySpecialFamily);
-
-            Achievements.CrocoBeatArenaFast = instance.Content.DefineAchievementForSkill("CrocoBeatArenaFast", ref CrocoBodySpecialFamily.Result.AddSkill(Skills.CrocoSuperBite))
-                .SetIconSprite(Skills.CrocoSuperBite.icon)
-                .SetPrerequisiteAchievement("BeatArena")
-                .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
-            // Match achievement identifiers from 1.6.1
-            Achievements.CrocoBeatArenaFast.AchievementDef.identifier = "FSS_CrocoBeatArenaFast";
-
-            yield return CreateCrocoSuperBiteEffectAsync();
+                    ref SkillFamily.Variant skillVariant = ref loadOps.CrocoBodySpecialFamily.Result.AddSkill(Skills.CrocoSuperBite);
+                    Achievements.CrocoBeatArenaFast = args.content.DefineAchievementForSkill("CrocoBeatArenaFast", ref skillVariant)
+                        .SetIconSprite(Skills.CrocoSuperBite.icon)
+                        .SetPrerequisiteAchievement("BeatArena")
+                        .SetTrackerTypes(typeof(CrocoBeatArenaFastAchievement), typeof(CrocoBeatArenaFastAchievement.ServerAchievement));
+                    // Match achievement identifiers from 1.6.1
+                    Achievements.CrocoBeatArenaFast.AchievementDef.identifier = "FSS_CrocoBeatArenaFast";
+                }
+            };
         }
 
-        public static IEnumerator CreateCrocoSuperBiteEffectAsync()
+        private static IEnumerator<float> CreateCrocoSuperBiteEffectAsync(LoadStaticContentAsyncArgs args)
         {
-            yield return Ivyl.LoadAddressableAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab", out var CrocoBiteEffect);
-            yield return Ivyl.LoadAddressableAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat", out var matCrocoGooSmall2);
-            yield return Ivyl.LoadAddressableAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png", out var texRampPoison);
-
-            CrocoSuperBiteEffect = Ivyl.ClonePrefab(CrocoBiteEffect.Result, "CrocoSuperBiteEffect");
-            if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
+            var loadOps = (
+                CrocoBiteEffect: Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Croco/CrocoBiteEffect.prefab"),
+                matCrocoGooSmall2: Addressables.LoadAssetAsync<Material>("RoR2/Base/Croco/matCrocoGooSmall2.mat"),
+                texRampPoison: Addressables.LoadAssetAsync<Texture>("RoR2/Base/Common/ColorRamps/texRampPoison.png")
+                );
+            return new GenericLoadingCoroutine
             {
-                gooRenderer.sharedMaterial = matCrocoGooSmall2.Result;
-            }
-            float multiplier = 1.2f;
-            if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
-            {
-                swingTrail.localScale *= multiplier;
-                if (swingTrail.TryGetComponent(out ParticleSystemRenderer swingTrailRenderer))
+                new AwaitAssetsCoroutine { loadOps },
+                delegate
                 {
-                    swingTrailRenderer.sharedMaterial = new Material(swingTrailRenderer.sharedMaterial);
-                    swingTrailRenderer.sharedMaterial.SetColor("_TintColor", new Color32(121, 255, 107, 255));
-                    swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", texRampPoison.Result);
+                    CrocoSuperBiteEffect = Ivyl.ClonePrefab(loadOps.CrocoBiteEffect.Result, "CrocoSuperBiteEffect");
+                    if (CrocoSuperBiteEffect.transform.TryFind("Goo", out Transform goo) && goo.TryGetComponent(out ParticleSystemRenderer gooRenderer))
+                    {
+                        gooRenderer.sharedMaterial = loadOps.matCrocoGooSmall2.Result;
+                    }
+                    float multiplier = 1.2f;
+                    if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail", out Transform swingTrail))
+                    {
+                        swingTrail.localScale *= multiplier;
+                        if (swingTrail.TryGetComponent(out ParticleSystemRenderer swingTrailRenderer))
+                        {
+                            swingTrailRenderer.sharedMaterial = new Material(swingTrailRenderer.sharedMaterial);
+                            swingTrailRenderer.sharedMaterial.SetColor("_TintColor", new Color32(121, 255, 107, 255));
+                            swingTrailRenderer.sharedMaterial.SetTexture("_RemapTex", loadOps.texRampPoison.Result);
+                        }
+                    }
+                    if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
+                    {
+                        swingTrailDistortion.localScale *= multiplier;
+                    }
+                    if (CrocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
+                    {
+                        flash.localScale *= multiplier;
+                    }
                 }
-            }
-            if (CrocoSuperBiteEffect.transform.TryFind("SwingTrail, Distortion", out Transform swingTrailDistortion))
-            {
-                swingTrailDistortion.localScale *= multiplier;
-            }
-            if (CrocoSuperBiteEffect.transform.TryFind("Flash", out Transform flash))
-            {
-                flash.localScale *= multiplier;
-            }
+            };
         }
 
         private static void GlobalEventManager_onHitEnemyAcceptedServer(DamageInfo damageInfo, GameObject victim, uint? dotMaxStacksFromAttacker)
