@@ -27,7 +27,7 @@ partial class FreeSkillSaturday
         public static Dictionary<Material, Material> slipperyMaterialInstances;
         public static bool didUpdateSceneVisuals;
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Artifact of Entropy";
             instance.ArtifactsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
@@ -52,33 +52,6 @@ partial class FreeSkillSaturday
                         activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
                     }
                 }
-                /*instance.loadStaticContentAsync += args =>
-                {
-                    var EngiBubbleShield = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Engi/EngiBubbleShield.prefab");
-                    return new GenericLoadingCoroutine
-                    {
-                        new AwaitAssetsCoroutine { EngiBubbleShield },
-                        delegate
-                        {
-                            if (EngiBubbleShield.Result.transform.TryFind("Collision/ActiveVisual", out Transform activeVisual))
-                            {
-                                activeVisual.gameObject.AddComponent<FreezeRotationWhenArtifactEnabled>();
-                            }
-                        }
-                    };
-                };
-                instance.loadStaticContentAsync += args =>
-                {
-                    var physmatSlidingProjectile = args.assets.LoadAsync<PhysicMaterial>("physmatSlidingProjectile");
-                    return new GenericLoadingCoroutine
-                    {
-                        new AwaitAssetsCoroutine { physmatSlidingProjectile },
-                        delegate
-                        {
-                            SlidingProjectile = physmatSlidingProjectile.asset;
-                        }
-                    };
-                };*/
                 instance.loadStaticContentAsync += LoadPhysmatSlidingProjectileAsync;
                 static IEnumerator<float> LoadPhysmatSlidingProjectileAsync(LoadStaticContentAsyncArgs args)
                 {

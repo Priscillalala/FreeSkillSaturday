@@ -10,7 +10,7 @@ partial class FreeSkillSaturday
         public static float attackSpeedBonus = 0.45f;
         public static float attackSpeedBonusPerStack = 0.35f;
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Theremin";
             instance.ItemsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));

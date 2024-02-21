@@ -14,7 +14,7 @@ partial class FreeSkillSaturday
         public static DamageAPI.ModdedDamageType SuperBleedOnHit { get; private set; }
         public static GameObject CrocoSuperBiteEffect { get; private set; }
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Disembowel";
             instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));

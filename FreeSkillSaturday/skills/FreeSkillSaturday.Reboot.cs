@@ -14,7 +14,7 @@ partial class FreeSkillSaturday
         public static GameObject RebootOverlay { get; private set; }
         public static GameObject VentEffect { get; private set; }
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Reboot";
             instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));

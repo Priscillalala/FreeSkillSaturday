@@ -61,15 +61,15 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday.Loa
         ItemsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Items.cfg"), false);
         SkillsConfig = this.CreateConfigFile(System.IO.Path.ChangeExtension(Config.ConfigFilePath, ".Skills.cfg"), false);
 
-        Entropy.Init();
-        GodlessEye.Init();
-        FlintArrowhead.Init();
-        Theremin.Init();
-        Disembowel.Init();
-        PulseGrenade.Init();
-        Reboot.Init();
-        Venom.Init();
-        XQRChip.Init();
+        Entropy.Init(this);
+        GodlessEye.Init(this);
+        FlintArrowhead.Init(this);
+        Theremin.Init(this);
+        Disembowel.Init(this);
+        PulseGrenade.Init(this);
+        Reboot.Init(this);
+        Venom.Init(this);
+        XQRChip.Init(this);
 
         Expansion = Content.DefineExpansion();
         loadStaticContentAsync += LoadExpansionIconAsync;
@@ -96,7 +96,7 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday.Loa
                 "ContentPack:RoR2.DLC1"
             }, Addressables.MergeMode.Union, typeof(ItemDisplayRuleSet)).ToAssetDictionary<ItemDisplayRuleSet>();
         },
-        { base.LoadStaticContentAsync(args), 0.8f },
+        { () => base.LoadStaticContentAsync(args), 0.8f },
         delegate 
         { 
             Content.AddEntityStatesFromAssembly(typeof(FreeSkillSaturday).Assembly); 
@@ -105,7 +105,7 @@ public partial class FreeSkillSaturday : BaseContentPlugin<FreeSkillSaturday.Loa
 
     protected override IEnumerator<float> FinalizeAsync(BaseContentPlugin.FinalizeAsyncArgs args) => new GenericLoadingCoroutine
     {
-        { base.FinalizeAsync(args), 0.8f },
+        { () => base.FinalizeAsync(args), 0.8f },
         { freeitemfridayassets.assetBundle.UpgradeStubbedShadersAsync(), 0.15f },
         delegate 
         { 

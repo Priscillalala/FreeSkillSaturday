@@ -13,7 +13,7 @@ partial class FreeSkillSaturday
 
         public static GameObject DelayedDeathHandler { get; private set; }
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Godless Eye";
             instance.EquipmentConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));

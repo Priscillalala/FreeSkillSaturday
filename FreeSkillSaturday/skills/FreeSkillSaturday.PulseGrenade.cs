@@ -22,7 +22,7 @@ partial class FreeSkillSaturday
         public static GameObject GrenadeGhost { get; private set; }
         public static GameObject GrenadeProjectile { get; private set; }
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "Pulse Grenade";
             instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
@@ -132,7 +132,7 @@ partial class FreeSkillSaturday
                     {
                         projectileImpactExplosion.blastRadius = 5f;
                         projectileImpactExplosion.lifetimeAfterImpact = 0.15f;
-                        projectileImpactExplosion.lifetimeExpiredSound = instance.Content.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
+                        projectileImpactExplosion.lifetimeExpiredSound = args.content.DefineNetworkSoundEvent("nseElectricGrenadeExpired").SetEventName("Play_item_use_BFG_zaps");
                         projectileImpactExplosion.offsetForLifetimeExpiredSound = 0.05f;
                         projectileImpactExplosion.impactEffect = GrenadeExplosionEffect;
                     }

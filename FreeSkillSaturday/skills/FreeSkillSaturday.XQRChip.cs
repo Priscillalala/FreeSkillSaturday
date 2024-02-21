@@ -19,7 +19,7 @@ partial class FreeSkillSaturday
 
         public static GameObject SmartTargetVisualizer { get; private set; }
 
-        public static void Init()
+        public static void Init(FreeSkillSaturday instance)
         {
             const string SECTION = "XQR Chip";
             instance.SkillsConfig.Bind(ref enabled, SECTION, string.Format(CONTENT_ENABLED_FORMAT, SECTION));
